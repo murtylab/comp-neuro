@@ -1,5 +1,5 @@
 # comp-neuro
-code/material for the computational neuroscience course
+code/material for comp neuro
 
 | Notebook   | Link  |
 |------------|-------------------------------------------|
