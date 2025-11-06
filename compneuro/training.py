@@ -24,7 +24,6 @@ def train_model(
     video_fps=60,
     device = "mps:0",
     ylim = 1.1,
-    noisy_data = False
 ) -> float:
     """
     Trains a model on the given dataset.
@@ -99,7 +98,7 @@ def train_model(
                     plt.xlabel("Input")
                     plt.ylabel("Output")
 
-                    if noisy_data == True:
+                    if "train_without_noise" in dataset:
                         plt.scatter(
                             dataset["train_without_noise"]["x"].cpu().numpy(), 
                             dataset["train_without_noise"]["y"].cpu().numpy(), 
