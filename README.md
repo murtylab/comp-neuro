@@ -1,5 +1,15 @@
 # comp-neuro
-code/material for comp neuro
+
+### "Just enough" python
+
+
+| Notebook   | Link  |
+|------------|-------------------------------------------|
+| Demo       | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/murtylab/comp-neuro/blob/master/notebooks/python_basics/demo.ipynb) |
+| Assignment | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/murtylab/comp-neuro/blob/master/notebooks/python_basics/assignment.ipynb) |
+
+
+### Simple neural networks
 
 | Notebook   | Link  |
 |------------|-------------------------------------------|
@@ -7,7 +17,7 @@ code/material for comp neuro
 | Playground | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/murtylab/comp-neuro/blob/master/notebooks/simple_neural_networks/compneuro-playground.ipynb) |
 
 
-Setup steps:
+Setup:
 
 1. Clone the repo
 
