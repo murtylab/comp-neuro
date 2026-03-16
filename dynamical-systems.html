@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="N. Apurva Ratan Murty">
+<meta name="description" content="Dynamical Systems: Foundations — Computational Neuroscience, Georgia Institute of Technology">
+<meta name="course" content="PSYC 3803 / PSYC 8805 / NEUR 4803">
+<title>Dynamical Systems — Computational Neuroscience · Georgia Tech</title>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    tags: 'none'
+  },
+  options: { skipHtmlTags: ['script','noscript','style','textarea'] },
+  startup: { typeset: false }
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* TOKENS */
+:root {
+  --bg: #06090f;
+  --card: #0e1420;
+  --border: #1c2840;
+  --text: #e8ecf5;
+  --muted: #7a8aaa;
+  --faint: #1c2840;
+  --sans: 'DM Sans', system-ui, sans-serif;
+  --serif: 'Lora', Georgia, serif;
+  --mono: 'JetBrains Mono', monospace;
+  --accent: #C29122;
+  --accent-navy: #003057;
+  --accent-bg: rgba(194,145,34,0.10);
+  --canvas-dot: rgba(194,145,34,0.08);
+}
+body.light {
+  --bg: #f7f8fc;
+  --card: #ffffff;
+  --border: #dde2ef;
+  --text: #003057;
+  --muted: #4a6080;
+  --faint: #dde2ef;
+  --accent: #C29122;
+  --accent-navy: #003057;
+  --accent-bg: rgba(194,145,34,0.09);
+  --canvas-dot: rgba(0,48,87,0.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: -webkit-fill-available; height: 100%; }
+body {
+  height: 100vh;
+  height: -webkit-fill-available;
+  overflow: hidden;
+  background: var(--bg); color: var(--text);
+  font-family: var(--sans); font-size: 1rem;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.7;
+}
+
+/* SLIDES */
+#slides { width: 100%; height: 100vh; height: 100dvh; position: relative; }
+.slide {
+  position: absolute; inset: 0; display: grid;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.slide.active { opacity: 1; pointer-events: all; }
+
+/* COVER */
+#slide-0 { place-items: center; position: relative; overflow: hidden; min-height: 100vh; min-height: 100dvh; }
+body:not(.light) #slide-0 { background: radial-gradient(ellipse 80% 65% at 50% 52%, #0d1e3a 0%, #080c14 70%); }
+body.light #slide-0 { background: radial-gradient(ellipse 80% 65% at 50% 52%, #e4eaf8 0%, #f7f8fc 70%); }
+#cover-bg-canvas { position: absolute; inset: 0; pointer-events: none; opacity: 0.35; }
+
+.cover-inner {
+  position: relative; text-align: center; max-width: 680px;
+  padding: 0 40px; z-index: 1;
+  display: flex; flex-direction: column; align-items: center;
+}
+.cover-gt-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px 6px 8px;
+  border: 1px solid rgba(194,145,34,0.35);
+  border-radius: 100px;
+  margin-bottom: 18px;
+  font-size: 0.75rem; font-weight: 600;
+  color: var(--accent);
+  letter-spacing: .02em;
+}
+body.light .cover-gt-badge { background: rgba(194,145,34,0.07); }
+body:not(.light) .cover-gt-badge { background: rgba(194,145,34,0.08); }
+
+.cover-module {
+  font-family: var(--mono); font-size: 0.65rem;
+  letter-spacing: .2em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 14px;
+}
+.cover-title {
+  font-family: var(--serif);
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-weight: 600; line-height: 1.12;
+  letter-spacing: -0.025em; margin-bottom: 22px;
+}
+.cover-title em { font-style: italic; color: var(--accent); }
+.cover-author {
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.65;
+  margin-bottom: 20px;
+  font-family: var(--sans);
+}
+.cover-desc {
+  font-size: 1rem; color: var(--muted);
+  line-height: 1.8; max-width: 500px;
+  margin: 0 auto 36px;
+}
+.start-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 14px 32px;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: 100px;
+  font-family: var(--sans); font-size: 0.97rem; font-weight: 700;
+  cursor: pointer; transition: transform .15s, box-shadow .15s;
+  letter-spacing: .01em;
+}
+.start-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(194,145,34,.35); }
+
+/* CONTENT LAYOUT */
+.content-slide { grid-template-columns: 1fr 1.2fr; }
+
+/* Accent stripe on left edge — colour set per-slide via JS */
+.left-panel {
+  display: flex; flex-direction: column;
+  padding: 28px 40px 20px 52px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  border-left: 4px solid var(--accent);
+  transition: border-color 0.4s;
+}
+.left-panel .spacer-top { flex: 1; min-height: 0; max-height: 48px; }
+.slide-nav { margin-top: auto !important; flex-shrink: 0; }
+
+.slide-number {
+  font-family: var(--mono); font-size: 0.65rem;
+  color: var(--muted); letter-spacing: .18em;
+  text-transform: uppercase; margin-bottom: 10px;
+}
+.slide-tag {
+  display: inline-block; font-family: var(--mono);
+  font-size: 0.68rem; letter-spacing: .1em;
+  padding: 4px 11px; border-radius: 100px;
+  margin-bottom: 16px; font-weight: 600;
+}
+.slide-title {
+  font-family: var(--serif);
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
+  font-weight: 600; line-height: 1.22;
+  letter-spacing: -0.015em; margin-bottom: 8px;
+}
+.slide-hook {
+  font-family: var(--serif); font-style: italic;
+  font-size: 1.05rem; color: var(--muted);
+  margin-bottom: 20px; line-height: 1.65;
+  border-left: 2px solid var(--border);
+  padding-left: 14px;
+}
+.explanation { font-size: 0.97rem; line-height: 1.88; color: var(--text); }
+.explanation p { margin-bottom: 12px; }
+.explanation p:last-child { margin-bottom: 0; }
+.explanation strong { color: var(--text); font-weight: 700; }
+
+/* Key term highlighting */
+.term {
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-bg);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-style: normal;
+}
+
+/* Equation blocks */
+.eq {
+  margin: 16px 0;
+  padding: 16px 22px;
+  background: var(--accent-bg);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  line-height: 1.8;
+  overflow-x: auto;
+}
+.eq .MathJax { font-size: 1.08em !important; }
+body:not(.light) .eq .MathJax { color: #9ecfff !important; }
+body.light .eq .MathJax { color: #1a44aa !important; }
+.eq-label {
+  font-size: 0.66rem; color: var(--muted); margin-bottom: 8px;
+  font-family: var(--mono); letter-spacing: .1em; text-transform: uppercase;
+}
+
+.try-box {
+  margin-top: 18px; padding: 14px 18px;
+  border-radius: 10px; border-left: 3px solid;
+}
+.try-label {
+  font-family: var(--mono); font-size: 0.66rem;
+  letter-spacing: .12em; text-transform: uppercase;
+  font-weight: 600; margin-bottom: 8px;
+}
+.try-box p { font-size: 0.88rem; line-height: 1.7; color: var(--muted); margin: 0; }
+.try-box p + p { margin-top: 8px; }
+
+.key-idea {
+  margin-top: 16px; padding: 12px 15px;
+  background: var(--accent-bg);
+  border: 1px solid var(--border); border-radius: 10px;
+  font-size: 0.86rem; line-height: 1.65; color: var(--muted);
+}
+.key-idea strong { color: var(--text); }
+
+/* RIGHT PANEL */
+.right-panel {
+  display: flex; flex-direction: column;
+  background: var(--card); position: relative;
+}
+.sim-header {
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  background: var(--card);
+}
+.sim-title {
+  font-family: var(--sans); font-size: 0.82rem;
+  font-weight: 600; color: var(--text); flex: 1;
+}
+.sim-status {
+  font-family: var(--mono); font-size: 0.68rem;
+  padding: 3px 11px; border-radius: 20px;
+  background: var(--accent-bg); color: var(--accent);
+  font-weight: 500;
+}
+
+.canvas-area {
+  flex: 1; position: relative; display: flex;
+  align-items: center; justify-content: center; overflow: hidden;
+}
+canvas { display: block; }
+
+.controls-bar {
+  padding: 13px 18px; border-top: 1px solid var(--border);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 9px; flex-shrink: 0;
+  background: var(--card);
+}
+.btn {
+  padding: 7px 15px; border-radius: 8px; border: 1px solid var(--border);
+  background: transparent; color: var(--text);
+  font-family: var(--sans); font-size: 0.82rem; font-weight: 500;
+  cursor: pointer; transition: all .14s; white-space: nowrap;
+}
+.btn:hover { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+.btn.primary { color: #fff; border-color: transparent; }
+.btn.primary:hover { opacity: .9; transform: translateY(-1px); filter: brightness(1.1); }
+.slider-row { display: flex; align-items: center; gap: 7px; font-size: 0.8rem; color: var(--muted); }
+.slider-row input[type=range] { width: 90px; cursor: pointer; accent-color: var(--accent); }
+.slider-val { font-family: var(--mono); font-size: 0.75rem; min-width: 28px; color: var(--accent); font-weight: 600; }
+
+.cover-nav-simple {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 22px; justify-content: center;
+}
+.cover-nav-label {
+  font-size: 0.72rem; color: var(--muted);
+  font-family: var(--mono); letter-spacing: .04em;
+}
+
+/* COURSE HEADER */
+.course-header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 30px;
+  background: #003057;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 500;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: .08em;
+  border-bottom: 2px solid #C29122;
+}
+.ch-name { color: #fff; font-weight: 600; letter-spacing: .04em; }
+.ch-codes { color: rgba(255,255,255,0.5); margin-left: 10px; }
+.ch-right { display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.5); }
+.ch-gold { color: #C29122; font-weight: 700; }
+
+/* Offset slides to account for header bar */
+#slides { margin-top: 30px; height: calc(100vh - 30px); height: calc(100dvh - 30px); }
+#slide-0 { min-height: calc(100vh - 30px); min-height: calc(100dvh - 30px); }
+
+/* NAVIGATION */
+.slide-nav {
+  display: flex; align-items: center; gap: 6px;
+  padding: 12px 0 0 0; border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+/* Numbered pills instead of dots */
+.nav-dot {
+  width: 22px; height: 22px; border-radius: 6px;
+  background: transparent;
+  border: 1px solid var(--border);
+  cursor: pointer; transition: all .18s;
+  font-family: var(--mono); font-size: 0.6rem;
+  font-weight: 600; color: var(--muted);
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+}
+.nav-dot:hover { border-color: var(--accent); color: var(--accent); }
+.nav-dot.active {
+  background: var(--accent); border-color: var(--accent);
+  color: #fff; transform: scale(1.1);
+}
+.nav-arrow {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent; color: var(--text); font-size: 1rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all .14s; flex-shrink: 0;
+}
+.nav-arrow:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+.nav-arrow:disabled { opacity: .3; cursor: default; }
+.nav-label {
+  font-family: var(--mono); font-size: 0.62rem;
+  letter-spacing: .06em; color: var(--muted);
+  white-space: nowrap; margin-left: auto;
+}
+.theme-toggle-btn {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.88rem; margin-left: 2px; flex-shrink: 0; transition: all .2s;
+}
+.theme-toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="course-header">
+  <div>
+    <span class="ch-name">Computational Neuroscience</span>
+    <span class="ch-codes">PSYC 3803 · PSYC 8805 · NEUR 4803</span>
+  </div>
+  <div class="ch-right">
+    <span>N. Apurva Ratan Murty, PhD</span>
+    <span class="ch-gold">Georgia Tech</span>
+  </div>
+</div>
+<div id="slides">
+
+<div class="slide active" id="slide-0">
+  <canvas id="cover-bg-canvas"></canvas>
+  <div class="cover-inner">
+    <div class="cover-gt-badge">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <rect width="22" height="22" rx="5" fill="#C29122"/>
+        <text x="11" y="16" font-family="Georgia,serif" font-size="13" font-weight="700" fill="white" text-anchor="middle">GT</text>
+      </svg>
+      <span>Georgia Institute of Technology</span>
+    </div>
+    <h1 class="cover-title">Dynamical Systems</h1>
+    <p class="cover-author">N. Apurva Ratan Murty, PhD<br>Assistant Professor, School of Psychology</p>
+    <p class="cover-desc">Dynamical systems theory gives us a language for thinking about neural activity as something that unfolds in time rather than something frozen in a snapshot. In this module, we develop the basic ideas needed to describe that evolution, using concrete examples from neurons and neural populations throughout.</p>
+    <button class="start-btn" onclick="goTo(1)">
+      Begin
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="cover-nav-simple">
+      <button class="nav-arrow nav-prev" onclick="goTo(currentSlide-1)" disabled>‹</button>
+      <span class="cover-nav-label">Use arrow keys or click Begin</span>
+      <button class="nav-arrow nav-next" onclick="goTo(currentSlide+1)">›</button>
+      <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme" style="margin-left:8px">🌙</button>
+    </div>
+  </div>
+</div>
+
+<div class="slide content-slide" id="slide-1">
+  <div class="left-panel">
+    <div class="slide-number">1 / 7</div>
+    <div class="slide-tag" style="background:rgba(77,124,254,.12);color:#4d7cfe">Foundations</div>
+    <h2 class="slide-title">What is a dynamical system?</h2>
+    <p class="slide-hook">A system whose state evolves over time according to a rule.</p>
+    <div class="explanation">
+      <p>A dynamical system has two essential ingredients. The first is a <span class="term">state</span>: a set of variables that captures everything needed to describe the system at a particular moment. The second is a <span class="term">rule of evolution</span>: a mathematical rule that determines how that state changes over time. Together, these two pieces define the system's behavior.</p>
+      <p>In computational neuroscience, the state can take many forms depending on the level of description. For a single neuron, it might be the <span class="term">membrane potential</span> and perhaps additional variables such as adaptation or channel gating. For a neural population, it might be the <span class="term">average firing rate</span>, the level of synaptic current, or a small set of latent variables summarizing population activity. The rule governing the evolution of that state is usually written as a <span class="term">differential equation</span>, which expresses the rate of change of each variable as a function of the current state and any external input.</p>
+      <p>What makes the dynamical systems perspective so useful is that it shifts our focus away from isolated snapshots of neural activity and toward how activity unfolds in time. Instead of asking only what the state is right now, we ask: does the system settle to a stable state? Does it oscillate? Does it amplify small perturbations or suppress them? Does it move toward one of several possible outcomes depending on where it starts? These are the kinds of questions that matter for understanding memory, decision-making, motor control, and many other neural computations.</p>
+      <p>This perspective is powerful because neural computation is inherently temporal. Brains do not simply represent information statically; they transform, integrate, maintain, and update information over time. Dynamical systems theory gives us a language for describing those transformations. It lets us think of neural activity not just as values changing from moment to moment, but as <span class="term">trajectories</span> moving through a <span class="term">state space</span>, shaped by the underlying structure of the system. That shift, from snapshot to trajectory, is one of the most important conceptual moves in computational neuroscience.</p>
+    </div>
+    <div class="try-box" style="background:rgba(77,124,254,.07);border-color:#4d7cfe">
+      <div class="try-label" style="color:#4d7cfe">👉 Try it</div>
+      <p>The panel on the right shows three simple systems evolving under different rules: one decays toward zero, one oscillates, one grows toward a ceiling. Notice how the long-term behaviour differs entirely even though the governing equation has the same basic structure in each case.</p>
+    </div>
+  </div>
+  <div class="right-panel">
+    <div class="sim-header">
+      <div class="sim-title">Three systems, same starting state, different rules</div>
+      <div class="sim-status" id="ds-status">Running</div>
+    </div>
+    <div class="canvas-area"><canvas id="cv-ds"></canvas></div>
+    <div class="controls-bar">
+      <button class="btn primary" style="background:#C29122" onclick="dsReset()">↺ Restart</button>
+      <button class="btn" onclick="dsToggle()" id="ds-btn">▶ Play</button>
+      <span style="font-size:0.78rem;color:var(--muted)">Decay · Oscillate · Grow</span>
+    </div>
+  </div>
+</div>
+
+<div class="slide content-slide" id="slide-2">
+  <div class="left-panel">
+    <div class="slide-number">2 / 7</div>
+    <div class="slide-tag" style="background:rgba(67,217,173,.12);color:#43d9ad">Foundations</div>
+    <h2 class="slide-title">State and state space</h2>
+    <p class="slide-hook">The state is where the system is. State space is all the places it could be.</p>
+    <div class="explanation">
+      <p>The <span class="term">state</span> of a system is a complete description of its condition at a given moment. The <span class="term">state space</span> is the set of all possible states the system can occupy.</p>
+      <p>For a single neuron with membrane voltage $V$ and a recovery variable $w$, the state is the pair $(V, w)$. For a population model with $N$ firing rates, the state is a point in an $N$-dimensional space. As the system evolves over time, that point moves through state space, tracing out a path called a <span class="term">trajectory</span>.</p>
+      <p>This geometric viewpoint is central to computational neuroscience. Rather than focusing only on the activity of individual neurons, we can ask where the system as a whole lies in state space, how it moves, and what kinds of regions or structures organize that movement. Ideas like <span class="term">attractors</span>, <span class="term">oscillations</span>, and <span class="term">bifurcations</span> are most naturally understood in these terms.</p>
+    </div>
+    <div class="try-box" style="background:rgba(67,217,173,.07);border-color:#43d9ad">
+      <div class="try-label" style="color:#43d9ad">👉 Try it</div>
+      <p>Click anywhere in the state space on the right to set an initial condition. Watch the trajectory evolve from that point. The same system, different starting points, can lead to very different long-term behaviour.</p>
+      <p>The coloured dots show where several trajectories end up.</p>
+    </div>
+  </div>
+  <div class="right-panel">
+    <div class="sim-header">
+      <div class="sim-title">2D state space — click to set initial condition</div>
+      <div class="sim-status" id="ss-status">Click to explore</div>
+    </div>
+    <div class="canvas-area" style="cursor:crosshair"><canvas id="cv-ss"></canvas></div>
+    <div class="controls-bar">
+      <button class="btn primary" style="background:#43d9ad;color:#000" onclick="ssClear()">Clear trails</button>
+      <button class="btn" onclick="ssAddRandom()">Add random</button>
+      <span style="font-size:0.78rem;color:var(--muted)">Each click launches a new trajectory</span>
+    </div>
+  </div>
+</div>
+
+<div class="slide content-slide" id="slide-3">
+  <div class="left-panel">
+    <div class="slide-number">3 / 7</div>
+    <div class="slide-tag" style="background:rgba(247,201,72,.12);color:#f7c948">Equations</div>
+    <h2 class="slide-title">Reading a differential equation</h2>
+    <p class="slide-hook">The equation tells you the rate of change. The solution tells you the trajectory.</p>
+    <div class="explanation">
+      <p>Most models in computational neuroscience use equations of the form:</p>
+      <div class="eq">
+        <div class="eq-label">General form</div>
+        $$\tau \frac{dx}{dt} = -x + f(\text{input})$$
+      </div>
+      <p>The left side is the rate of change of $x$, scaled by a <span class="term">time constant</span> $\tau$. The right side says what drives that change. The term $-x$ is a <span class="term">leak</span>: it pulls $x$ back toward zero. The term $f(\text{input})$ is the drive from external inputs or from other neurons.</p>
+      <p>$\tau$ sets the timescale. A large $\tau$ means the system changes slowly; a small $\tau$ means it responds quickly. In a neuron, $\tau$ is the <span class="term">membrane time constant</span>, typically between 10 and 30 milliseconds.</p>
+      <p>Reading this equation, you can immediately see that if the input is zero, $x$ decays toward zero over a timescale $\tau$. If the input is strong enough, $x$ rises to a new <span class="term">steady state</span> where $dx/dt = 0$.</p>
+    </div>
+    <div class="try-box" style="background:rgba(247,201,72,.07);border-color:#f7c948">
+      <div class="try-label" style="color:#f7c948">👉 Try it</div>
+      <p>Press "Turn input ON" to apply a sustained step input $I$. Watch $x(t)$ rise exponentially toward the steady state. The purple marker shows where $t = \tau$: exactly 63% of the way to steady state.</p>
+      <p>Turn the input back off and $x$ decays at the same rate. Increase $\tau$ to slow everything down; decrease it to speed up. The shape of the curve is determined entirely by $\tau$ and $I$.</p>
+    </div>
+  </div>
+  <div class="right-panel">
+    <div class="sim-header">
+      <div class="sim-title">$\tau\, dx/dt = {-x} + \text{input}$ · step response</div>
+      <div class="sim-status" id="eq-status">x = 0.00</div>
+    </div>
+    <div class="canvas-area"><canvas id="cv-eq"></canvas></div>
+    <div class="controls-bar">
+      <button class="btn primary" style="background:#f7c948;color:#000" id="eq-pulse-btn" onclick="eqPulse()">▶ Turn input ON</button>
+      <button class="btn" onclick="eqReset()">↺ Reset</button>
+      <div class="slider-row">
+        <span>τ:</span>
+        <input type="range" id="eq-tau" min="5" max="60" value="20" oninput="eqUpdate()">
+        <span class="slider-val" id="eq-tau-val">20 ms</span>
+      </div>
+      <div class="slider-row">
+        <span>Input:</span>
+        <input type="range" id="eq-inp" min="10" max="100" value="70" oninput="eqUpdate()">
+        <span class="slider-val" id="eq-inp-val">70%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide content-slide" id="slide-4">
+  <div class="left-panel">
+    <div class="slide-number">4 / 7</div>
+    <div class="slide-tag" style="background:rgba(192,132,252,.12);color:#c084fc">Fixed Points</div>
+    <h2 class="slide-title">Fixed points and steady states</h2>
+    <p class="slide-hook">A fixed point is where the dynamics stop. It is where dx/dt = 0.</p>
+    <div class="explanation">
+      <p>A <span class="term">fixed point</span> is a state of a dynamical system that does not change over time. If the system is exactly at that state, it will remain there unless something perturbs it. In mathematical terms, for a system written as $\dot{x} = f(x)$, a fixed point $x^*$ satisfies</p>
+      <div class="eq">
+        <div class="eq-label">Fixed point condition</div>
+        $$f(x^*) = 0$$
+      </div>
+      <p>This means that at that state, the rate of change is zero.</p>
+      <p>It is helpful to think of a fixed point as a place where all of the forces acting on the system balance out. Nothing is pushing the state to move in one direction or another, so the system stays put. In one-dimensional systems, fixed points are the values of $x$ where the curve $f(x)$ crosses zero. In higher-dimensional systems, fixed points are the points where all components of change are simultaneously zero.</p>
+      <p>In neuroscience, fixed points often correspond to meaningful neural states. A neuron sitting quietly at its <span class="term">resting membrane potential</span> can be thought of as being at a fixed point. A recurrent network that continues firing after a brief input may be sitting at a different fixed point corresponding to <span class="term">persistent activity</span>. A decision-making circuit that has settled into one choice rather than another can also be described as having reached a fixed point. In this way, fixed points are often interpreted as the <span class="term">stable states of neural computation</span>.</p>
+      <p>A system can have more than one fixed point. When that happens, the system's eventual behavior may depend on its <span class="term">initial condition</span> — where it starts in state space. If the system begins near one fixed point, it may move toward that one; if it begins elsewhere, it may end up at another. This is why fixed points are so important: they tell us what kinds of long-term states the system can support, and how different starting conditions can lead to different outcomes.</p>
+      <p>One important subtlety is that not all fixed points are the same. Some are <span class="term">stable</span>, meaning that if you perturb the system slightly, it returns to the fixed point. Others are <span class="term">unstable</span>, meaning that even a small perturbation causes the system to move away. This distinction matters a great deal in neuroscience, because stable fixed points are the ones that can robustly represent things like resting states, memories, or decisions, while unstable fixed points often act more like boundaries separating different possible outcomes.</p>
+      <p>So when we study fixed points, we are really asking two related questions: where can the system stop, and which of those stopping points are actually robust? Those questions are central to understanding how neural systems store information, maintain activity, and transition between different computational states.</p>
+    </div>
+    <div class="try-box" style="background:rgba(192,132,252,.07);border-color:#c084fc">
+      <div class="try-label" style="color:#c084fc">👉 Try it</div>
+      <p>The curve shows $f(x)$. Fixed points are where it crosses zero. Drag the ball to any starting position and release — it rolls to the nearest fixed point.</p>
+      <p>Move the input slider $I$ to shift the curve up or down and watch fixed points appear, merge, and disappear. Each qualitative change in the number of fixed points is a bifurcation.</p>
+    </div>
+  </div>
+  <div class="right-panel">
+    <div class="sim-header">
+      <div class="sim-title">Flow on a line — fixed points where f(x) = 0</div>
+      <div class="sim-status" id="fp-status">Drag the ball</div>
+    </div>
+    <div class="canvas-area" style="cursor:grab"><canvas id="cv-fp"></canvas></div>
+    <div class="controls-bar">
+      <button class="btn primary" style="background:#c084fc" onclick="fpReset()">↺ Reset</button>
+      <div class="slider-row">
+        <span>Input I:</span>
+        <input type="range" id="fp-inp" min="-80" max="80" value="0" oninput="fpUpdate()">
+        <span class="slider-val" id="fp-inp-val">0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide content-slide" id="slide-5">
+  <div class="left-panel">
+    <div class="slide-number">5 / 7</div>
+    <div class="slide-tag" style="background:rgba(255,107,107,.12);color:#ff6b6b">Stability</div>
+    <h2 class="slide-title">Stability: does the system return?</h2>
+    <p class="slide-hook">A stable fixed point pulls nearby trajectories back in. An unstable one pushes them away.</p>
+    <div class="explanation">
+      <p>A fixed point is a state where the system stops changing. But once we find a fixed point, the next question is just as important: what happens if the system is pushed slightly away from it? The answer tells us whether the fixed point is <span class="term">stable</span> or <span class="term">unstable</span>.</p>
+      <p>A <span class="term">stable fixed point</span> is one that pulls nearby trajectories back toward it. If the system is perturbed a little, the dynamics act to restore it, so over time the state returns. An <span class="term">unstable fixed point</span> does the opposite: if the system is nudged even slightly away, the dynamics amplify that deviation and the state moves farther away instead of coming back. So stability is really about how the system responds to small <span class="term">perturbations</span>.</p>
+      <p>For a one-dimensional system $\dot{x} = f(x)$, this idea has a simple geometric interpretation. A fixed point $x^*$ is stable when the slope of $f(x)$ at that point is negative, $f'(x^*) < 0$. In that case, a small perturbation to the right makes $\dot{x}$ negative, which pushes the state back left, and a small perturbation to the left makes $\dot{x}$ positive, which pushes the state back right. In both cases, the dynamics restore the system toward the fixed point. By contrast, if $f'(x^*) > 0$, then perturbations are pushed farther away rather than corrected, so the fixed point is unstable.</p>
+      <p>This distinction is fundamental in neuroscience because neural systems must often operate reliably in the presence of noise. A stable fixed point can support a robust neural state — a resting state, a maintained memory, or a persistent representation after a stimulus is gone. The state remains meaningful because small fluctuations do not destroy it. An unstable fixed point cannot hold the system in place for long, but it can still play an important role. It often acts like a <span class="term">decision boundary</span> between different possible outcomes. In a decision-making network, the unstable state may separate two stable choice states, so that once activity moves slightly to one side, the dynamics carry it strongly toward one decision or the other.</p>
+      <p>So when we study stability, we are asking whether a fixed point can actually support a meaningful computational state. A fixed point by itself only tells us where change stops. Stability tells us whether that state is robust enough to matter.</p>
+    </div>
+    <div class="try-box" style="background:rgba(255,107,107,.08);border-color:#ff6b6b">
+      <div class="try-label" style="color:#ff6b6b">👉 Try it</div>
+      <p>The landscape shows three fixed points: two stable (valleys) and one unstable (peak). Drop the ball near the unstable point and watch it roll away. Drop it anywhere else and it returns to the nearest stable point.</p>
+      <p>The unstable fixed point is the boundary between the two basins of attraction.</p>
+    </div>
+  </div>
+  <div class="right-panel">
+    <div class="sim-header">
+      <div class="sim-title">Stability landscape — stable valleys, unstable peaks</div>
+      <div class="sim-status" id="stab-status">Drag the ball</div>
+    </div>
+    <div class="canvas-area" style="cursor:grab"><canvas id="cv-stab"></canvas></div>
+    <div class="controls-bar">
+      <button class="btn primary" style="background:#ff6b6b" onclick="stabReset()">↺ Reset</button>
+      <button class="btn" onclick="stabPerturb()">Perturb near unstable point</button>
+    </div>
+  </div>
+</div>
+
+<div class="slide content-slide" id="slide-6">
+  <div class="left-panel">
+    <div class="slide-number">6 / 7</div>
+    <div class="slide-tag" style="background:rgba(91,143,255,.12);color:#5b8fff">1D Dynamics</div>
+    <h2 class="slide-title">One-dimensional dynamics</h2>
+    <p class="slide-hook">Start simple: one variable, one equation, one axis.</p>
+    <div class="explanation">
+      <p>In a one-dimensional dynamical system, the state is described by a single variable, and the dynamics tell us how that variable changes over time.</p>
+      <p>A simple nonlinear example is a firing-rate model with recurrent feedback:</p>
+      <div class="eq">
+        <div class="eq-label">Rate model</div>
+        $$\tau \frac{dr}{dt} = -r + \phi(wr + I)$$
+      </div>
+      <p>where $r$ is the <span class="term">firing rate</span>, $\phi(\cdot)$ is a saturating nonlinearity such as $\tanh$, $I$ is external input, and $w$ controls the strength of <span class="term">recurrent feedback</span>. The <span class="term">leak term</span> $-r$ tends to pull activity back down, while the recurrent and external input terms push it up.</p>
+      <p>When recurrent feedback is weak, the system typically has a single stable fixed point. When recurrent feedback becomes strong enough, the system can develop multiple fixed points. In many cases, this includes two stable fixed points separated by one unstable fixed point, producing <span class="term">bistability</span>. This means the system can settle into one of two different long-term states depending on its <span class="term">initial condition</span> or input history.</p>
+      <p>A useful way to visualize one-dimensional dynamics is with a <span class="term">flow diagram</span>. At each value of $r$, we ask whether $dr/dt > 0$ or $dr/dt < 0$. If $dr/dt > 0$, the state moves to the right; if $dr/dt < 0$, it moves to the left. Fixed points are the values of $r$ where $dr/dt = 0$. These are the points where the flow changes sign, and the pattern of arrows around them tells us whether they are stable or unstable.</p>
+    </div>
+    <div class="try-box" style="background:rgba(91,143,255,.07);border-color:#5b8fff">
+      <div class="try-label" style="color:#5b8fff">👉 Try it</div>
+      <p>Increase the gain slider past $g = 1.0$. Watch two new stable fixed points emerge symmetrically as the system goes bistable. The original fixed point at $x=0$ becomes unstable.</p>
+      <p>Change the input $I$ to break the symmetry and shift the fixed points. At large enough $|I|$, one stable point disappears entirely — a saddle-node bifurcation.</p>
+    </div>
+  </div>
+  <div class="right-panel">
+    <div class="sim-header">
+      <div class="sim-title">1D flow diagram — arrows show direction of change</div>
+      <div class="sim-status" id="od-status">Monostable</div>
+    </div>
+    <div class="canvas-area"><canvas id="cv-od"></canvas></div>
+    <div class="controls-bar">
+      <button class="btn primary" style="background:#5b8fff" onclick="odReset()">↺ Reset</button>
+      <div class="slider-row">
+        <span>Gain $g$:</span>
+        <input type="range" id="od-gain" min="5" max="25" value="8" oninput="odUpdate()">
+        <span class="slider-val" id="od-gain-val">0.8</span>
+      </div>
+      <div class="slider-row">
+        <span>Input $I$:</span>
+        <input type="range" id="od-inp" min="-30" max="30" value="0" oninput="odUpdate()">
+        <span class="slider-val" id="od-inp-val">0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide content-slide" id="slide-7">
+  <div class="left-panel">
+    <div class="slide-number">7 / 7</div>
+    <div class="slide-tag" style="background:rgba(67,217,173,.12);color:#43d9ad">Phase Plane</div>
+    <h2 class="slide-title">Two-dimensional phase plane</h2>
+    <p class="slide-hook">When a system has two variables, its state is a point in a plane. The phase plane shows you everything about how that point moves.</p>
+    <div class="explanation">
+      <p>Consider a system with two variables, $x$ (a fast variable, like voltage) and $y$ (a slow variable, like adaptation). At every point in the plane, the equations tell you the velocity of the state — how fast $x$ and $y$ are each changing. Drawing these as arrows everywhere gives the <span class="term">vector field</span>.</p>
+      <p>Two special curves cut through this field. The <span class="term">$\dot{x}=0$ nullcline</span> is where $x$ has no tendency to change — on this curve, all motion is purely vertical. The <span class="term">$\dot{y}=0$ nullcline</span> is where $y$ has no tendency to change — motion there is purely horizontal. A fixed point must satisfy both conditions simultaneously, so fixed points are exactly where the two nullclines cross.</p>
+      <p>Once you have the nullclines and the vector field, you can reason about trajectories without computing anything. Where vectors point toward a fixed point, the system is being pulled in. Where they point away, the state is being pushed out. The whole qualitative story of the system is visible at a glance.</p>
+    </div>
+    <div class="try-box" style="background:rgba(67,217,173,.07);border-color:#43d9ad">
+      <div class="try-label" style="color:#43d9ad">👉 Try it — step by step</div>
+      <p>Use the buttons on the right to build up the picture one layer at a time. Start with just the vector field, then add each nullcline, then click anywhere to launch a trajectory and watch where it goes.</p>
+    </div>
+  </div>
+  <div class="right-panel">
+    <div class="sim-header">
+      <div class="sim-title">Phase plane — build it up layer by layer</div>
+      <div class="sim-status" id="pp-status">Step 1 of 4</div>
+    </div>
+    <div class="canvas-area" style="cursor:crosshair"><canvas id="cv-pp"></canvas></div>
+    <div class="controls-bar">
+      <button class="btn primary" style="background:#43d9ad;color:#000" id="pp-step-btn" onclick="ppNextStep()">Next: add $\dot{x}=0$ nullcline →</button>
+      <button class="btn" onclick="ppClear()">Clear trajectories</button>
+      <button class="btn" onclick="ppRestart()">↺ Start over</button>
+      <span style="font-size:0.78rem;color:var(--muted)" id="pp-hint">Click in the plane to launch a trajectory</span>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="slide-8">
+  <div style="max-width:820px;padding:48px 32px;text-align:center;margin:auto">
+    <div style="font-family:var(--mono);font-size:0.65rem;letter-spacing:.16em;color:var(--muted);margin-bottom:14px">MODULE 1 COMPLETE</div>
+    <h2 style="font-family:var(--serif);font-size:clamp(1.7rem,3vw,2.6rem);font-weight:600;margin-bottom:12px;letter-spacing:-0.02em">You now have the vocabulary</h2>
+    <p style="color:var(--muted);margin-bottom:36px;font-size:0.95rem;max-width:560px;margin-left:auto;margin-right:auto;line-height:1.7;margin-bottom:36px">Module 2 builds directly on these ideas. Every attractor network type is a specific configuration of fixed points and flow fields in a high-dimensional state space.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;text-align:left;margin-bottom:36px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:15px">
+        <div style="font-family:var(--mono);font-size:0.65rem;color:#4d7cfe;margin-bottom:5px">1 · DYNAMICAL SYSTEM</div>
+        <div style="font-weight:600;font-size:0.9rem;margin-bottom:3px">State + rule</div>
+        <div style="font-size:0.8rem;color:var(--muted)">A system whose state evolves over time according to a differential equation.</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:15px">
+        <div style="font-family:var(--mono);font-size:0.65rem;color:#43d9ad;margin-bottom:5px">2 · STATE SPACE</div>
+        <div style="font-weight:600;font-size:0.9rem;margin-bottom:3px">All possible states</div>
+        <div style="font-size:0.8rem;color:var(--muted)">Evolution traces a trajectory $\mathbf{x}(t)$ through the space of all possible configurations.</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:15px">
+        <div style="font-family:var(--mono);font-size:0.65rem;color:#f7c948;margin-bottom:5px">3 · DIFFERENTIAL EQUATION</div>
+        <div style="font-weight:600;font-size:0.9rem;margin-bottom:3px">$\tau \dot{x} = -x + I$</div>
+        <div style="font-size:0.8rem;color:var(--muted)">Leak pulls toward zero, input drives away. $\tau$ sets the timescale.</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:15px">
+        <div style="font-family:var(--mono);font-size:0.65rem;color:#c084fc;margin-bottom:5px">4 · FIXED POINTS</div>
+        <div style="font-weight:600;font-size:0.9rem;margin-bottom:3px">Where $\dot{x} = 0$</div>
+        <div style="font-size:0.8rem;color:var(--muted)">Resting states, persistent activity states, decision states. The system does not leave them.</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:15px">
+        <div style="font-family:var(--mono);font-size:0.65rem;color:#ff6b6b;margin-bottom:5px">5 · STABILITY</div>
+        <div style="font-weight:600;font-size:0.9rem;margin-bottom:3px">$f'(x^*) < 0$ or $> 0$?</div>
+        <div style="font-size:0.8rem;color:var(--muted)">Stable fixed points attract nearby trajectories. Unstable ones repel them.</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:15px">
+        <div style="font-family:var(--mono);font-size:0.65rem;color:#5b8fff;margin-bottom:5px">6 · 1D FLOW</div>
+        <div style="font-weight:600;font-size:0.9rem;margin-bottom:3px">Arrows on a line</div>
+        <div style="font-size:0.8rem;color:var(--muted)">Sigmoidal feedback can create bistability. A bifurcation is a qualitative change in fixed point structure.</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:15px">
+        <div style="font-family:var(--mono);font-size:0.65rem;color:#43d9ad;margin-bottom:5px">7 · PHASE PLANE</div>
+        <div style="font-weight:600;font-size:0.9rem;margin-bottom:3px">Nullclines + vector field</div>
+        <div style="font-size:0.8rem;color:var(--muted)">Nullclines intersect at fixed points. The vector field gives the full qualitative behaviour.</div>
+      </div>
+    </div>
+    <button class="start-btn" onclick="goTo(0)" style="background:var(--faint);color:var(--text);margin-right:12px">← Review</button>
+    <button class="start-btn" style="background:var(--accent)">Continue to Module 2 →</button>
+  </div>
+</div>
+
+</div><!-- /slides -->
+
+<script>
+let isDark = false;
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.classList.toggle('light', !isDark);
+  document.querySelectorAll('.theme-toggle-btn').forEach(b => b.textContent = isDark ? '☀️' : '🌙');
+}
+function themeC2()   { return isDark ? '#0f1520' : '#ffffff'; }
+function themeRule() { return isDark ? '#1e2a40' : '#d8dde8'; }
+function themeText() { return isDark ? '#dde3f0' : '#1a2035'; }
+function themeMuted(){ return isDark ? '#7a8aaa' : '#5a6680'; }
+
+const TOTAL = 9;
+let currentSlide = 0;
+
+const slideAccents = [
+  '#C29122', // cover — GT Gold
+  '#C29122', // 1 — GT Gold
+  '#003057', // 2 — GT Navy
+  '#C29122', // 3 — GT Gold
+  '#003057', // 4 — GT Navy
+  '#C29122', // 5 — GT Gold
+  '#003057', // 6 — GT Navy
+  '#C29122', // 7 — GT Gold
+  '#003057', // 8 — summary
+];
+
+function goTo(n) {
+  n = Math.max(0, Math.min(TOTAL-1, n));
+  document.getElementById('slide-'+currentSlide).classList.remove('active');
+  currentSlide = n;
+  document.getElementById('slide-'+currentSlide).classList.add('active');
+  document.querySelectorAll('.nav-dot').forEach((d,i) => d.classList.toggle('active', i % TOTAL === n));
+  document.querySelectorAll('.nav-label').forEach(el => el.textContent = `${n} / ${TOTAL-1}`);
+  document.querySelectorAll('.nav-prev').forEach(b => b.disabled = n===0);
+  document.querySelectorAll('.nav-next').forEach(b => b.disabled = n===TOTAL-1);
+  // Accent colour
+  const accent = slideAccents[n] || '#C29122';
+  document.querySelectorAll('.left-panel').forEach(p => { p.style.borderLeftColor = accent; });
+  document.querySelectorAll('.sim-status').forEach(el => {
+    el.style.background = accent + '18'; el.style.color = accent;
+  });
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key==='ArrowRight'||e.key==='ArrowDown') goTo(currentSlide+1);
+  if (e.key==='ArrowLeft'||e.key==='ArrowUp') goTo(currentSlide-1);
+});
+
+function navHTML() {
+  const labels = ['·','1','2','3','4','5','6','7','·'];
+  const dots = Array.from({length:TOTAL},(_,i)=>
+    `<button class="nav-dot" onclick="goTo(${i})" title="Slide ${i}">${labels[i]||i}</button>`
+  ).join('');
+  return `<div class="slide-nav">
+    <button class="nav-arrow nav-prev" onclick="goTo(currentSlide-1)">‹</button>
+    ${dots}
+    <button class="nav-arrow nav-next" onclick="goTo(currentSlide+1)">›</button>
+    <span class="nav-label">0 / ${TOTAL-1}</span>
+    <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+  </div>`;
+}
+document.querySelectorAll('.left-panel').forEach(panel => {
+  const spacer = document.createElement('div'); spacer.className='spacer-top';
+  panel.insertBefore(spacer, panel.firstChild);
+  panel.insertAdjacentHTML('beforeend', navHTML());
+});
+// Summary slide gets the full nav centred
+document.querySelector('#slide-8 > div').insertAdjacentHTML('beforeend', navHTML());
+document.querySelectorAll('#slide-8 .slide-nav').forEach(el => {
+  el.style.justifyContent='center'; el.style.borderTop='none';
+  el.style.paddingTop='0'; el.style.marginTop='20px'; el.style.width='100%';
+});
+goTo(0);
+// Start in light mode
+document.body.classList.add('light');
+document.querySelectorAll('.theme-toggle-btn').forEach(b => b.textContent = '🌙');
+
+// ── COVER BACKGROUND — animated faint vector field ──
+(function(){
+  const cv = document.getElementById('cover-bg-canvas');
+  if(!cv) return;
+  function resize(){
+    const W = window.innerWidth, H = window.innerHeight;
+    cv.width = W; cv.height = H;
+    cv.style.width = W+'px'; cv.style.height = H+'px';
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  let t=0;
+  function draw(){
+    requestAnimationFrame(draw);
+    t += 0.006;
+    const W=cv.width, H=cv.height;
+    const g=cv.getContext('2d');
+    g.clearRect(0,0,W,H);
+    const isDarkMode = !document.body.classList.contains('light');
+    const col = isDarkMode ? '194,145,34' : '0,48,87';
+    const step=48;
+    for(let x=step;x<W;x+=step){
+      for(let y=step;y<H;y+=step){
+        const nx=(x/W)*4-2, ny=(y/H)*3-1.5;
+        const dx = nx - nx*nx*nx/3 - ny + 0.3 + 0.1*Math.sin(t*0.7);
+        const dy = (nx - 2.5*ny + 0.1 + 0.1*Math.cos(t*0.5))/8;
+        const mag=Math.hypot(dx,dy)||1;
+        const sc=16/mag;
+        const ex=x+dx*sc, ey=y-dy*sc;
+        const alpha=0.18+0.07*Math.sin(t+x*0.02+y*0.015);
+        g.strokeStyle=`rgba(${col},${alpha})`;
+        g.lineWidth=1;
+        g.beginPath(); g.moveTo(x,y); g.lineTo(ex,ey); g.stroke();
+        const ang=Math.atan2(ey-y,ex-x);
+        g.fillStyle=`rgba(${col},${alpha})`;
+        g.beginPath();
+        g.moveTo(ex,ey);
+        g.lineTo(ex-5*Math.cos(ang-0.5),ey-5*Math.sin(ang-0.5));
+        g.lineTo(ex-5*Math.cos(ang+0.5),ey-5*Math.sin(ang+0.5));
+        g.closePath(); g.fill();
+      }
+    }
+  }
+  draw();
+})();
+
+// ── DOT GRID for canvas backgrounds ──
+function drawDotGrid(g, W, H) {
+  const isDarkMode = !document.body.classList.contains('light');
+  const col = isDarkMode ? 'rgba(77,124,254,0.09)' : 'rgba(42,92,219,0.07)';
+  const sp=24;
+  g.fillStyle=col;
+  for(let x=sp;x<W;x+=sp){
+    for(let y=sp;y<H;y+=sp){
+      g.beginPath(); g.arc(x,y,1.2,0,Math.PI*2); g.fill();
+    }
+  }
+}
+
+// Typeset all math after DOM is ready
+window.addEventListener('load', () => {
+  if (window.MathJax) MathJax.typesetPromise();
+});
+
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function lerp(a,b,t){return a+(b-a)*t;}
+function sigmoid(x){return 1/(1+Math.exp(-x));}
+
+function setupCanvas(id, wrapSel) {
+  const cv = document.getElementById(id);
+  const wrap = cv.parentElement;
+  function resize() {
+    const r = wrap.getBoundingClientRect();
+    const dpr = window.devicePixelRatio||1;
+    cv.style.width=r.width+'px'; cv.style.height=r.height+'px';
+    cv.width=~~(r.width*dpr); cv.height=~~(r.height*dpr);
+    cv._W=r.width; cv._H=r.height; cv._dpr=dpr;
+  }
+  resize();
+  return cv;
+}
+
+const ds = {t:0, running:false,
+  systems:[
+    {name:'Decay',    color:'#C29122', x:0.5, v:0, hist:[], fn:(x)=>-x*1.5},
+    {name:'Oscillate',color:'#43d9ad', x:0.5, v:0, hist:[], fn:(x,t)=>Math.sin(t*2)*0.8},
+    {name:'Grow',     color:'#ff6b6b', x:0.5, v:0, hist:[], fn:(x)=>x*(1-x)*2.5},
+  ]
+};
+
+function dsReset(){ds.t=0;ds.systems.forEach(s=>{s.x=0.5;s.hist=[];});ds.running=false;document.getElementById('ds-btn').textContent='▶ Play';}
+function dsToggle(){ds.running=!ds.running;document.getElementById('ds-btn').textContent=ds.running?'⏸ Pause':'▶ Play';}
+
+function dsDraw(){
+  const cv=document.getElementById('cv-ds');
+  if(!cv._W){setupCanvas('cv-ds');}
+  const W=cv._W,H=cv._H,dpr=cv._dpr||1;
+  const g=cv.getContext('2d');g.save();g.scale(dpr,dpr);
+  g.fillStyle=themeC2();g.fillRect(0,0,W,H);
+  drawDotGrid(g,W,H);
+
+  if(ds.running){
+    ds.t+=0.018;
+    ds.systems.forEach(s=>{
+      const dx=s.fn(s.x,ds.t)*0.018;
+      s.x=clamp(s.x+dx,0,1);
+      s.hist.push(s.x);
+      if(s.hist.length>300)s.hist.shift();
+    });
+  }
+
+  const pad=40,tw=W-pad*2,th=H-pad*2-40;
+  // axes
+  g.strokeStyle=themeRule();g.lineWidth=1;
+  g.beginPath();g.moveTo(pad,pad);g.lineTo(pad,pad+th);g.lineTo(pad+tw,pad+th);g.stroke();
+  g.fillStyle=themeMuted();g.font='11px DM Sans';g.textAlign='center';
+  g.fillText('Time',pad+tw/2,H-6);
+  g.save();g.translate(14,pad+th/2);g.rotate(-Math.PI/2);g.fillText('State x',0,0);g.restore();
+
+  ds.systems.forEach(s=>{
+    if(s.hist.length<2){
+      // Draw starting point marker
+      const px=pad, py=pad+th-s.x*th;
+      g.beginPath(); g.arc(px, py, 5, 0, Math.PI*2);
+      g.fillStyle=s.color; g.fill();
+      g.fillStyle=s.color; g.font='bold 11px DM Sans'; g.textAlign='left';
+      g.fillText(s.name, pad+tw+4, py+4);
+      return;
+    }
+    g.beginPath();
+    s.hist.forEach((v,i)=>{
+      const px=pad+(i/(299))*tw;
+      const py=pad+th-(v)*th;
+      i===0?g.moveTo(px,py):g.lineTo(px,py);
+    });
+    g.strokeStyle=s.color;g.lineWidth=2.2;g.stroke();
+    // label at end
+    const ly=pad+th-s.x*th;
+    g.fillStyle=s.color;g.font='bold 11px DM Sans';g.textAlign='left';
+    g.fillText(s.name,pad+tw+4,ly+4);
+  });
+
+  // Prompt to press play when not yet started
+  if(!ds.running && ds.systems[0].hist.length===0){
+    g.fillStyle=themeMuted(); g.font='13px DM Sans'; g.textAlign='center';
+    g.fillText('All three systems start at x = 0.5  —  press ▶ Play to evolve', pad+tw/2, pad+th/2);
+  }
+
+  document.getElementById('ds-status').textContent=ds.running?'Running':'Paused';
+  g.restore();
+  requestAnimationFrame(dsDraw);
+}
+dsDraw();
+
+const ss = {trails:[], running:true};
+
+// System: spiral-in toward (0.5, 0.5)
+function ssVelocity(x,y){
+  const cx=0.5,cy=0.5;
+  const dx=x-cx,dy=y-cy;
+  return {vx:-dx*0.8-dy*1.5, vy:dy*0.8-dx*(-1.5)};
+  // actually: dx/dt = -a(x-cx) - b(y-cy), dy/dt = b(x-cx) - a(y-cy)
+}
+
+function ssClear(){ss.trails=[];}
+function ssAddRandom(){
+  for(let i=0;i<5;i++) ssLaunch(Math.random(),Math.random());
+}
+function ssLaunch(x,y){
+  ss.trails.push({pts:[{x,y}],done:false,color:`hsl(${Math.random()*300+40},70%,60%)`});
+}
+
+function ssDraw(){
+  const cv=document.getElementById('cv-ss');
+  if(!cv._W){setupCanvas('cv-ss');}
+  const W=cv._W,H=cv._H,dpr=cv._dpr||1;
+  const g=cv.getContext('2d');g.save();g.scale(dpr,dpr);
+  g.fillStyle=themeC2();g.fillRect(0,0,W,H);
+  drawDotGrid(g,W,H);
+
+  function toScreen(x,y){return [x*W, y*H];}
+
+  // Advance trails
+  ss.trails.forEach(tr=>{
+    if(tr.done)return;
+    const last=tr.pts[tr.pts.length-1];
+    const {vx,vy}=ssVelocity(last.x,last.y);
+    const nx=last.x+vx*0.006, ny=last.y+vy*0.006;
+    tr.pts.push({x:clamp(nx,0.01,0.99),y:clamp(ny,0.01,0.99)});
+    if(tr.pts.length>400)tr.done=true;
+  });
+
+  // Grid lines
+  g.strokeStyle=themeRule();g.lineWidth=0.5;g.globalAlpha=0.4;
+  for(let i=1;i<5;i++){
+    g.beginPath();g.moveTo(i*W/5,0);g.lineTo(i*W/5,H);g.stroke();
+    g.beginPath();g.moveTo(0,i*H/5);g.lineTo(W,i*H/5);g.stroke();
+  }
+  g.globalAlpha=1;
+
+  // Draw trails
+  ss.trails.forEach(tr=>{
+    if(tr.pts.length<2)return;
+    g.beginPath();
+    tr.pts.forEach(({x,y},i)=>{
+      const [sx,sy]=toScreen(x,y);
+      i===0?g.moveTo(sx,sy):g.lineTo(sx,sy);
+    });
+    g.strokeStyle=tr.color;g.lineWidth=1.8;g.stroke();
+    const last=tr.pts[tr.pts.length-1];
+    const [lx,ly]=toScreen(last.x,last.y);
+    g.beginPath();g.arc(lx,ly,5,0,Math.PI*2);
+    g.fillStyle=tr.color;g.fill();
+  });
+
+  // Fixed point
+  const [fpx,fpy]=toScreen(0.5,0.5);
+  g.beginPath();g.arc(fpx,fpy,7,0,Math.PI*2);
+  g.fillStyle='rgba(77,124,254,0.3)';g.fill();
+  g.strokeStyle='#4d7cfe';g.lineWidth=2;g.stroke();
+  g.fillStyle='#4d7cfe';g.font='11px DM Sans';g.textAlign='left';
+  g.fillText('Fixed point',fpx+10,fpy+4);
+
+  // Axes labels
+  g.fillStyle=themeMuted();g.font='11px DM Sans';g.textAlign='center';
+  g.fillText('← x₁ (variable 1) →',W/2,H-6);
+  g.save();g.translate(12,H/2);g.rotate(-Math.PI/2);g.fillText('← x₂ (variable 2) →',0,0);g.restore();
+  document.getElementById('ss-status').textContent=`${ss.trails.length} trajectory${ss.trails.length===1?'':'s'}`;
+
+  g.restore();
+  requestAnimationFrame(ssDraw);
+}
+
+document.getElementById('cv-ss').addEventListener('click',e=>{
+  const cv=e.target,r=cv.getBoundingClientRect();
+  ssLaunch((e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height);
+});
+// Pre-populate a few
+for(let i=0;i<6;i++) ssLaunch(Math.random()*0.8+0.1, Math.random()*0.8+0.1);
+ssDraw();
+
+const eq = {
+  x: 0, tau: 20, inp: 0.7,
+  state: 'off',   // 'off' | 'rising' | 'on' | 'falling'
+  t: 0,           // time within current state (ms)
+  hist: [],       // [{x, inputOn}]
+  maxT: 300,      // ms of history shown
+  inputOn: false,
+};
+
+function eqUpdate(){
+  eq.tau = parseInt(document.getElementById('eq-tau').value);
+  eq.inp = parseInt(document.getElementById('eq-inp').value)/100;
+  document.getElementById('eq-tau-val').textContent = eq.tau+' ms';
+  document.getElementById('eq-inp-val').textContent = document.getElementById('eq-inp').value+'%';
+}
+function eqReset(){ eq.x=0; eq.hist=[]; eq.t=0; eq.inputOn=false; eq.state='off'; }
+function eqPulse(){
+  // Toggle input on/off as a clear step
+  eq.inputOn = !eq.inputOn;
+  document.getElementById('eq-pulse-btn').textContent = eq.inputOn ? '⬛ Turn input OFF' : '▶ Turn input ON';
+}
+
+function eqDraw(){
+  const cv = document.getElementById('cv-eq');
+  if(!cv._W) setupCanvas('cv-eq');
+  const W=cv._W, H=cv._H, dpr=cv._dpr||1;
+  const g = cv.getContext('2d');
+  g.save(); g.scale(dpr, dpr);
+  g.fillStyle = themeC2(); g.fillRect(0,0,W,H);
+
+  // Physics — Euler step, 1 frame = 1ms
+  const target = eq.inputOn ? eq.inp : 0;
+  const dxdt = (-eq.x + target) / eq.tau;
+  eq.x = clamp(eq.x + dxdt, 0, 1);
+  eq.t += 1;
+  eq.hist.push({x: eq.x, on: eq.inputOn});
+  if(eq.hist.length > eq.maxT) eq.hist.shift();
+
+  // Layout: top strip = input signal, bottom = x(t) trace
+  const padL=58, padR=20, padTop=28, inputH=44, gap=20;
+  const traceTop = padTop + inputH + gap;
+  const traceH = H - traceTop - 52;
+  const tw = W - padL - padR;
+
+  // ── INPUT STRIP ──
+  g.fillStyle = themeRule(); g.globalAlpha=0.4;
+  g.fillRect(padL, padTop, tw, inputH);
+  g.globalAlpha=1;
+  g.strokeStyle=themeRule(); g.lineWidth=1;
+  g.strokeRect(padL, padTop, tw, inputH);
+
+  // Draw input signal as a step function
+  if(eq.hist.length > 1){
+    g.beginPath();
+    eq.hist.forEach(({on}, i) => {
+      const px = padL + (i/(eq.maxT-1))*tw;
+      const py = on ? padTop+8 : padTop+inputH-8;
+      i===0 ? g.moveTo(px,py) : g.lineTo(px,py);
+    });
+    g.strokeStyle='#f7c948'; g.lineWidth=2.5; g.stroke();
+
+    // Fill under input signal
+    g.beginPath();
+    eq.hist.forEach(({on}, i) => {
+      const px = padL + (i/(eq.maxT-1))*tw;
+      const py = on ? padTop+8 : padTop+inputH-8;
+      i===0 ? g.moveTo(px,py) : g.lineTo(px,py);
+    });
+    g.lineTo(padL+tw, padTop+inputH); g.lineTo(padL, padTop+inputH); g.closePath();
+    g.fillStyle='rgba(247,201,72,0.1)'; g.fill();
+  }
+
+  g.fillStyle=themeMuted(); g.font='11px DM Sans'; g.textAlign='right';
+  g.fillText('Input I(t)', padL-6, padTop+inputH/2+4);
+
+  // ── TRACE AREA ──
+  // Horizontal gridlines
+  [0, 0.25, 0.5, 0.75, 1.0].forEach(v => {
+    const py = traceTop + traceH - v*traceH;
+    g.strokeStyle=themeRule(); g.lineWidth=0.6; g.globalAlpha=0.6;
+    g.beginPath(); g.moveTo(padL,py); g.lineTo(padL+tw,py); g.stroke();
+    g.globalAlpha=1;
+    g.fillStyle=themeMuted(); g.font='10px JetBrains Mono'; g.textAlign='right';
+    g.fillText(v.toFixed(2), padL-6, py+4);
+  });
+
+  // Steady-state target line (dashed)
+  const ssY = traceTop + traceH - eq.inp*traceH;
+  g.strokeStyle='rgba(247,201,72,0.35)'; g.lineWidth=1.2; g.setLineDash([6,5]);
+  g.beginPath(); g.moveTo(padL,ssY); g.lineTo(padL+tw,ssY); g.stroke();
+  g.setLineDash([]);
+  g.fillStyle='rgba(247,201,72,0.55)'; g.font='10px DM Sans'; g.textAlign='left';
+  g.fillText('steady state = I = '+eq.inp.toFixed(2), padL+4, ssY-5);
+
+  // x(t) trace
+  if(eq.hist.length > 1){
+    g.beginPath();
+    eq.hist.forEach(({x}, i) => {
+      const px = padL + (i/(eq.maxT-1))*tw;
+      const py = traceTop + traceH - x*traceH;
+      i===0 ? g.moveTo(px,py) : g.lineTo(px,py);
+    });
+    g.strokeStyle='#4d7cfe'; g.lineWidth=2.8; g.stroke();
+
+    // Live dot
+    const lastX = eq.hist[eq.hist.length-1].x;
+    const dotPx = padL + tw;
+    const dotPy = traceTop + traceH - lastX*traceH;
+    const grd = g.createRadialGradient(dotPx,dotPy,0,dotPx,dotPy,7);
+    grd.addColorStop(0,'rgba(77,124,254,0.9)'); grd.addColorStop(1,'rgba(77,124,254,0)');
+    g.beginPath(); g.arc(dotPx, dotPy, 7, 0, Math.PI*2);
+    g.fillStyle=grd; g.fill();
+    g.beginPath(); g.arc(dotPx, dotPy, 4, 0, Math.PI*2);
+    g.fillStyle='#7ab4ff'; g.fill();
+  }
+
+  // τ annotation — find first rising edge and mark 63% point
+  const risingIdx = eq.hist.findIndex((h,i) => i>0 && !eq.hist[i-1].on && h.on);
+  if(risingIdx > 0 && eq.hist.length > risingIdx + eq.tau){
+    const tauIdx = Math.min(risingIdx + eq.tau, eq.hist.length-1);
+    const tauPx = padL + (tauIdx/(eq.maxT-1))*tw;
+    const tauVal = 0.632*eq.inp;
+    const tauPy = traceTop + traceH - tauVal*traceH;
+
+    // Vertical tick at t=τ
+    g.strokeStyle='rgba(192,132,252,0.7)'; g.lineWidth=1.5; g.setLineDash([4,3]);
+    g.beginPath(); g.moveTo(tauPx, traceTop); g.lineTo(tauPx, traceTop+traceH); g.stroke();
+    g.setLineDash([]);
+    // Dot at 63%
+    g.beginPath(); g.arc(tauPx, tauPy, 5, 0, Math.PI*2);
+    g.fillStyle='#c084fc'; g.fill();
+    // Label
+    g.fillStyle='#c084fc'; g.font='bold 10px DM Sans'; g.textAlign='left';
+    g.fillText('t = τ  →  x = 0.63·I', tauPx+6, tauPy-6);
+  }
+
+  // Axes
+  g.strokeStyle=themeRule(); g.lineWidth=1.5;
+  g.beginPath(); g.moveTo(padL,padTop); g.lineTo(padL,traceTop+traceH); g.lineTo(padL+tw,traceTop+traceH); g.stroke();
+
+  // Time axis label with tick marks
+  g.fillStyle=themeMuted(); g.font='11px DM Sans'; g.textAlign='center';
+  g.fillText('← Time (ms, last '+eq.maxT+' steps) →', padL+tw/2, H-6);
+  g.save(); g.translate(14, traceTop+traceH/2); g.rotate(-Math.PI/2);
+  g.fillText('x(t)  — firing rate', 0, 0); g.restore();
+
+  // Equation terms annotation on right margin
+  const termY = traceTop + traceH/2;
+  g.fillStyle='rgba(255,107,107,0.7)'; g.font='bold 10px DM Sans'; g.textAlign='left';
+  g.fillText('← leak  (−x)', W-padR-110, termY-12);
+  g.fillStyle='rgba(247,201,72,0.7)';
+  g.fillText('← drive (+I)', W-padR-110, termY+4);
+
+  document.getElementById('eq-status').textContent =
+    `x = ${eq.x.toFixed(3)}  |  input ${eq.inputOn ? 'ON' : 'OFF'}`;
+  g.restore();
+  requestAnimationFrame(eqDraw);
+}
+eqDraw();
+
+const fp={bx:0.8, bv:0, dragging:false, inp:0};
+
+function fpRawF(x){
+  // f(x) = -x^3 + x + I (cubic bistable)
+  return -Math.pow(x,3)+x+fp.inp/80;
+}
+function fpUpdate(){
+  fp.inp=parseInt(document.getElementById('fp-inp').value);
+  document.getElementById('fp-inp-val').textContent=fp.inp;
+}
+function fpReset(){fp.bx=0.8;fp.bv=0;}
+
+function fpDraw(){
+  const cv=document.getElementById('cv-fp');
+  if(!cv._W)setupCanvas('cv-fp');
+  const W=cv._W,H=cv._H,dpr=cv._dpr||1;
+  const g=cv.getContext('2d');g.save();g.scale(dpr,dpr);
+  g.fillStyle=themeC2();g.fillRect(0,0,W,H);
+  drawDotGrid(g,W,H);
+
+  const pad=50, tw=W-pad*2, mid=H*0.5;
+  const xRange=[-1.6,1.6], fRange=[-1.2,1.2];
+  function xToS(x){return pad+(x-xRange[0])/(xRange[1]-xRange[0])*tw;}
+  function fToS(f){return mid-f/(fRange[1])*mid*0.7;}
+
+  // Zero line
+  g.strokeStyle=themeRule();g.lineWidth=1.5;
+  g.beginPath();g.moveTo(pad,mid);g.lineTo(pad+tw,mid);g.stroke();
+  g.fillStyle=themeMuted();g.font='11px DM Sans';g.textAlign='right';
+  g.fillText('0',pad-6,mid+4);
+
+  // Flow arrows on x-axis
+  const nArrows=22;
+  for(let i=0;i<=nArrows;i++){
+    const x=xRange[0]+i/nArrows*(xRange[1]-xRange[0]);
+    const f=fpRawF(x);
+    const sx=xToS(x), sy=mid+30;
+    const arrowLen=clamp(f*18,-22,22);
+    if(Math.abs(arrowLen)<0.5)continue;
+    const col=f>0?'rgba(67,217,173,0.7)':'rgba(255,107,107,0.7)';
+    g.strokeStyle=col;g.fillStyle=col;g.lineWidth=1.5;
+    g.beginPath();g.moveTo(sx,sy);g.lineTo(sx+arrowLen,sy);g.stroke();
+    const dir=Math.sign(arrowLen);
+    g.beginPath();g.moveTo(sx+arrowLen,sy);
+    g.lineTo(sx+arrowLen-dir*6,sy-4);g.lineTo(sx+arrowLen-dir*6,sy+4);
+    g.closePath();g.fill();
+  }
+
+  // f(x) curve
+  g.beginPath();
+  for(let i=0;i<=200;i++){
+    const x=xRange[0]+i/200*(xRange[1]-xRange[0]);
+    const f=fpRawF(x);
+    const sx=xToS(x),sy=fToS(f);
+    i===0?g.moveTo(sx,sy):g.lineTo(sx,sy);
+  }
+  g.strokeStyle='#c084fc';g.lineWidth=2.5;g.stroke();
+
+  // Fixed points
+  let fps=[];
+  for(let i=0;i<200;i++){
+    const x0=xRange[0]+i/200*(xRange[1]-xRange[0]);
+    const x1=xRange[0]+(i+1)/200*(xRange[1]-xRange[0]);
+    if(fpRawF(x0)*fpRawF(x1)<0){
+      const xfp=(x0+x1)/2;
+      const slope=(fpRawF(x0+0.01)-fpRawF(x0-0.01))/0.02;
+      fps.push({x:xfp,stable:slope<0});
+    }
+  }
+  fps.forEach(({x,stable})=>{
+    const sx=xToS(x);
+    g.beginPath();g.arc(sx,mid,8,0,Math.PI*2);
+    g.fillStyle=stable?'#43d9ad':'#ff6b6b';g.fill();
+    g.strokeStyle=themeC2();g.lineWidth=2;g.stroke();
+    g.fillStyle=stable?'#43d9ad':'#ff6b6b';g.font='10px DM Sans';g.textAlign='center';
+    g.fillText(stable?'stable':'unstable',sx,mid+22);
+  });
+
+  // Ball physics
+  if(!fp.dragging){
+    const f=fpRawF(fp.bx);
+    fp.bv+=f*0.08;fp.bv*=0.84;
+    fp.bx=clamp(fp.bx+fp.bv*0.04,xRange[0]+0.05,xRange[1]-0.05);
+  }
+  const bsx=xToS(fp.bx);
+  g.beginPath();g.arc(bsx,mid-22,12,0,Math.PI*2);
+  const bg=g.createRadialGradient(bsx-3,mid-25,2,bsx,mid-22,12);
+  bg.addColorStop(0,'#ffe090');bg.addColorStop(1,'#e67e22');
+  g.fillStyle=bg;g.fill();g.strokeStyle='rgba(255,255,255,0.4)';g.lineWidth=1.5;g.stroke();
+
+  // Labels
+  g.strokeStyle=themeRule();g.lineWidth=1;
+  g.beginPath();g.moveTo(pad,pad);g.lineTo(pad,H-pad);g.stroke();
+  g.fillStyle=themeMuted();g.font='11px DM Sans';g.textAlign='center';
+  g.fillText('← x →',pad+tw/2,H-8);
+  g.save();g.translate(14,mid);g.rotate(-Math.PI/2);g.fillText('dx/dt = f(x)',0,0);g.restore();
+  g.fillStyle='#c084fc';g.font='11px DM Sans';g.textAlign='right';
+  g.fillText('f(x) = −x³ + x + I',pad+tw,pad+14);
+
+  const nearFP=fps.find(fp2=>Math.abs(fp.bx-fp2.x)<0.08);
+  document.getElementById('fp-status').textContent=nearFP?`At ${nearFP.stable?'stable':'unstable'} fixed point`:'Rolling…';
+  g.restore();
+  requestAnimationFrame(fpDraw);
+}
+
+document.getElementById('cv-fp').addEventListener('mousedown',e=>{
+  const cv=e.target,r=cv.getBoundingClientRect();
+  const mx=(e.clientX-r.left);
+  const tw=(cv._W||600)-100;
+  fp.bx=-1.6+mx/tw*3.2;fp.bv=0;fp.dragging=true;
+});
+document.addEventListener('mousemove',e=>{
+  if(!fp.dragging)return;
+  const cv=document.getElementById('cv-fp'),r=cv.getBoundingClientRect();
+  const tw=(cv._W||600)-100;
+  fp.bx=clamp(-1.6+(e.clientX-r.left)/tw*3.2,-1.55,1.55);
+});
+document.addEventListener('mouseup',()=>{fp.dragging=false;});
+fpDraw();
+
+const stab={bx:0, bv:0, dragging:false};
+
+function stabE(x){ return 0.25*x*x*x*x - 0.5*x*x; }  // minima at x=±1, local max at x=0
+function stabReset(){stab.bx=0.02;stab.bv=0;}
+function stabPerturb(){stab.bx=0.05+Math.random()*0.1;stab.bv=(Math.random()-0.5)*0.5;}
+
+function stabDraw(){
+  const cv=document.getElementById('cv-stab');
+  if(!cv._W)setupCanvas('cv-stab');
+  const W=cv._W,H=cv._H,dpr=cv._dpr||1;
+  const g=cv.getContext('2d');g.save();g.scale(dpr,dpr);
+  g.fillStyle=themeC2();g.fillRect(0,0,W,H);
+  drawDotGrid(g,W,H);
+
+  const pad=40,tw=W-pad*2;
+  const xR=[-1.6,1.6];
+  let mn=Infinity,mx=-Infinity;
+  for(let i=0;i<=200;i++){const x=xR[0]+i/200*(xR[1]-xR[0]);const e=stabE(x);if(e<mn)mn=e;if(e>mx)mx=e;}
+
+  function xToS(x){return pad+(x-xR[0])/(xR[1]-xR[0])*tw;}
+  function eToS(e){return H*0.85-(e-mn)/(mx-mn)*(H*0.68);}
+
+  // Fill under curve
+  const path=new Path2D();
+  for(let i=0;i<=200;i++){
+    const x=xR[0]+i/200*(xR[1]-xR[0]);
+    const e=stabE(x);
+    const sx=xToS(x),sy=eToS(e);
+    i===0?path.moveTo(sx,sy):path.lineTo(sx,sy);
+  }
+  path.lineTo(xToS(xR[1]),H);path.lineTo(xToS(xR[0]),H);path.closePath();
+  const grad=g.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'rgba(77,124,254,0.22)');grad.addColorStop(1,'rgba(77,124,254,0.06)');
+  g.fillStyle=grad;g.fill(path);
+  g.strokeStyle='rgba(77,124,254,0.8)';g.lineWidth=2.5;g.stroke(path);
+
+  // Stable (valley) markers — now at the bottom
+  [-1,1].forEach(x=>{
+    const sx=xToS(x),sy=eToS(stabE(x));
+    g.beginPath();g.arc(sx,sy,6,0,Math.PI*2);
+    g.fillStyle='rgba(67,217,173,0.5)';g.fill();
+    g.fillStyle='#43d9ad';g.font='bold 10px DM Sans';g.textAlign='center';
+    g.fillText('stable',sx,sy+18);
+  });
+  // Unstable (peak at 0) — now at the top
+  const usx=xToS(0),usy=eToS(stabE(0));
+  g.beginPath();g.arc(usx,usy,6,0,Math.PI*2);
+  g.fillStyle='rgba(255,107,107,0.5)';g.fill();
+  g.fillStyle='#ff6b6b';g.font='bold 10px DM Sans';g.textAlign='center';
+  g.fillText('unstable',usx,usy-12);
+
+  // Basin boundary annotation
+  g.strokeStyle='rgba(255,107,107,0.3)';g.lineWidth=1;g.setLineDash([4,4]);
+  g.beginPath();g.moveTo(usx,0);g.lineTo(usx,H);g.stroke();g.setLineDash([]);
+  g.fillStyle='rgba(255,107,107,0.4)';g.font='10px DM Sans';g.textAlign='center';
+  g.fillText('basin boundary',usx,H-8);
+
+  // Ball physics
+  if(!stab.dragging){
+    const eps=0.01;
+    const dEdx=(stabE(stab.bx+eps)-stabE(stab.bx-eps))/(2*eps);
+    stab.bv+=-dEdx*2.5;stab.bv*=0.83;
+    stab.bx=clamp(stab.bx+stab.bv*0.04,xR[0]+0.05,xR[1]-0.05);
+  }
+  const bsx=xToS(stab.bx),bsy=eToS(stabE(stab.bx))-14;
+  g.beginPath();g.ellipse(bsx,bsy+14,9,3.5,0,0,Math.PI*2);
+  g.fillStyle='rgba(0,0,0,0.2)';g.fill();
+  const bg2=g.createRadialGradient(bsx-3,bsy-3,2,bsx,bsy,12);
+  bg2.addColorStop(0,'#ffe090');bg2.addColorStop(1,'#e67e22');
+  g.beginPath();g.arc(bsx,bsy,12,0,Math.PI*2);g.fillStyle=bg2;g.fill();
+  g.strokeStyle='rgba(255,255,255,0.4)';g.lineWidth=1.5;g.stroke();
+
+  const atStable=Math.abs(Math.abs(stab.bx)-1)<0.12;
+  const atUnstable=Math.abs(stab.bx)<0.08;
+  document.getElementById('stab-status').textContent=
+    atStable?`At stable fixed point (x ≈ ${stab.bx>0?'+1':'-1'})`:
+    atUnstable?'Near unstable point — will diverge':'Rolling…';
+  g.restore();
+  requestAnimationFrame(stabDraw);
+}
+
+document.getElementById('cv-stab').addEventListener('mousedown',e=>{
+  stab.dragging=true;stab.bv=0;
+  const cv=e.target,r=cv.getBoundingClientRect();
+  stab.bx=-1.6+(e.clientX-r.left)/((cv._W||600)-80)*3.2;
+});
+document.addEventListener('mousemove',e=>{
+  if(!stab.dragging)return;
+  const cv=document.getElementById('cv-stab'),r=cv.getBoundingClientRect();
+  stab.bx=clamp(-1.6+(e.clientX-r.left)/((cv._W||600)-80)*3.2,-1.55,1.55);
+});
+document.addEventListener('mouseup',()=>{stab.dragging=false;});
+stabDraw();
+
+const od={gain:12, inp:0};
+
+// Rate model: dx/dt = -x + g·tanh(x + I)
+// Bifurcation at g=1: monostable below, bistable above
+// x ∈ [-2.2, 2.2], slider maps 5..25 → g = 0.5..2.5
+function odF(x){ return -x + (od.gain/10) * Math.tanh(x + od.inp*0.08); }
+function odUpdate(){
+  od.gain=parseInt(document.getElementById('od-gain').value);
+  od.inp=parseInt(document.getElementById('od-inp').value);
+  document.getElementById('od-gain-val').textContent=(od.gain/10).toFixed(1);
+  document.getElementById('od-inp-val').textContent=od.inp>0?'+'+od.inp:od.inp;
+}
+function odReset(){
+  od.gain=8; od.inp=0;
+  document.getElementById('od-gain').value=8;
+  document.getElementById('od-inp').value=0;
+  odUpdate();
+}
+
+function odDraw(){
+  const cv=document.getElementById('cv-od');
+  if(!cv._W)setupCanvas('cv-od');
+  const W=cv._W,H=cv._H,dpr=cv._dpr||1;
+  const g=cv.getContext('2d');g.save();g.scale(dpr,dpr);
+  g.fillStyle=themeC2();g.fillRect(0,0,W,H);
+  drawDotGrid(g,W,H);
+
+  const pad=54, tw=W-pad*2, mid=H*0.48;
+  const xR=[-2.2,2.2];
+  const fScale=1.4; // max f value to show
+
+  function xToS(x){return pad+(x-xR[0])/(xR[1]-xR[0])*tw;}
+  function fToS(f){return mid - (f/fScale)*(mid-pad*0.8);}
+
+  // Axes
+  g.strokeStyle=themeRule();g.lineWidth=1.5;
+  g.beginPath();g.moveTo(pad,mid);g.lineTo(pad+tw,mid);g.stroke(); // x-axis (f=0)
+  g.beginPath();g.moveTo(xToS(0),pad*0.6);g.lineTo(xToS(0),H-pad*0.8);g.stroke(); // y-axis (x=0)
+
+  // Axis tick labels
+  g.fillStyle=themeMuted();g.font='10px JetBrains Mono';
+  [-2,-1,0,1,2].forEach(v=>{
+    const sx=xToS(v);
+    g.textAlign='center';g.fillText(v,sx,mid+14);
+    g.strokeStyle=themeRule();g.lineWidth=0.5;g.globalAlpha=0.3;
+    g.beginPath();g.moveTo(sx,pad*0.6);g.lineTo(sx,H-pad*0.8);g.stroke();
+    g.globalAlpha=1;
+  });
+  g.fillStyle=themeMuted();g.textAlign='right';g.fillText('f=0',pad-4,mid+4);
+
+  // Compute curve
+  const N=400;
+  const curve=[];
+  for(let i=0;i<=N;i++){
+    const x=xR[0]+i/N*(xR[1]-xR[0]);
+    curve.push({x, f:odF(x)});
+  }
+
+  // Shade positive/negative
+  curve.forEach(({x,f},i)=>{
+    if(i===0)return;
+    const prev=curve[i-1];
+    const sx=xToS(x),psx=xToS(prev.x);
+    const sy=fToS(clamp(f,-fScale,fScale));
+    const psy=fToS(clamp(prev.f,-fScale,fScale));
+    g.fillStyle=f>0?'rgba(67,217,173,0.08)':'rgba(255,107,107,0.08)';
+    g.beginPath();
+    g.moveTo(psx,mid);g.lineTo(psx,psy);g.lineTo(sx,sy);g.lineTo(sx,mid);
+    g.closePath();g.fill();
+  });
+
+  // f(x) curve
+  g.beginPath();
+  curve.forEach(({x,f},i)=>{
+    const sx=xToS(x),sy=fToS(clamp(f,-fScale,fScale));
+    i===0?g.moveTo(sx,sy):g.lineTo(sx,sy);
+  });
+  g.strokeStyle='#5b8fff';g.lineWidth=2.8;g.stroke();
+
+  // Flow arrows just below x-axis
+  const arrowY=mid+38;
+  for(let i=0;i<22;i++){
+    const x=xR[0]+0.1+i/22*(xR[1]-xR[0]-0.2);
+    const f=odF(x);
+    const sx=xToS(x);
+    const len=clamp(f*28,-24,24);
+    if(Math.abs(len)<1)continue;
+    const col=f>0?'rgba(67,217,173,0.8)':'rgba(255,107,107,0.8)';
+    g.strokeStyle=col;g.fillStyle=col;g.lineWidth=1.8;
+    g.beginPath();g.moveTo(sx,arrowY);g.lineTo(sx+len,arrowY);g.stroke();
+    const d=Math.sign(len);
+    g.beginPath();g.moveTo(sx+len,arrowY);
+    g.lineTo(sx+len-d*6,arrowY-4);g.lineTo(sx+len-d*6,arrowY+4);
+    g.closePath();g.fill();
+  }
+
+  // Fixed points (bisection)
+  const fps2=[];
+  for(let i=0;i<N;i++){
+    const x0=xR[0]+i/N*(xR[1]-xR[0]);
+    const x1=xR[0]+(i+1)/N*(xR[1]-xR[0]);
+    if(odF(x0)*odF(x1)<0){
+      let lo=x0,hi=x1;
+      for(let k=0;k<20;k++){const m=(lo+hi)/2;odF(m)*odF(lo)<0?hi=m:lo=m;}
+      const xfp=(lo+hi)/2;
+      const slope=(odF(xfp+0.005)-odF(xfp-0.005))/0.01;
+      fps2.push({x:xfp,stable:slope<0});
+    }
+  }
+  fps2.forEach(({x,stable})=>{
+    const sx=xToS(x);
+    const r=9;
+    g.beginPath();g.arc(sx,mid,r,0,Math.PI*2);
+    g.fillStyle=stable?'rgba(67,217,173,0.25)':'rgba(255,107,107,0.25)';g.fill();
+    g.strokeStyle=stable?'#43d9ad':'#ff6b6b';g.lineWidth=2.5;g.stroke();
+    g.fillStyle=stable?'#43d9ad':'#ff6b6b';
+    g.font='bold 10px DM Sans';g.textAlign='center';
+    g.fillText(stable?'stable':'unstable',sx,stable?mid+24:mid-14);
+  });
+
+  // Axis labels
+  g.fillStyle=themeMuted();g.font='11px DM Sans';g.textAlign='center';
+  g.fillText('← x (activity) →',pad+tw/2,H-8);
+  g.save();g.translate(14,mid);g.rotate(-Math.PI/2);
+  g.fillText('f(x) = dx/dt',0,0);g.restore();
+
+  // Gain annotation
+  const gVal=(od.gain/10).toFixed(1);
+  const bistable=fps2.filter(p=>p.stable).length>=2;
+  g.fillStyle=bistable?'#43d9ad':'#f7c948';
+  g.font='bold 11px DM Sans';g.textAlign='right';
+  g.fillText(`g = ${gVal}  ${bistable?'(bistable)':'(monostable)'}`,pad+tw,pad+20);
+
+  document.getElementById('od-status').textContent=
+    bistable ? `Bistable — ${fps2.length} fixed points` :
+    fps2.length===1?'Monostable — 1 fixed point':`${fps2.length} fixed points`;
+  g.restore();
+  requestAnimationFrame(odDraw);
+}
+odDraw();
+
+// SLIDE 7 — Phase plane (guided 4-step reveal)
+
+// System: dx/dt = x - x^3/3 - y + 0.3
+//         dy/dt = (1/tau)*(x - 2.5y + 0.105)
+// x-nullcline (cubic S-shape): y = x - x^3/3 + 0.3
+// y-nullcline (shallow line):  y = (x + 0.105)/2.5
+// Three fixed points: two stable, one unstable saddle — good teaching example
+const ppP = {s:2.5, d:0.105, tau:8.0, I:0.3};
+function ppDx(x,y){ return x - x*x*x/3 - y + ppP.I; }
+function ppDy(x,y){ return (x - ppP.s*y + ppP.d)/ppP.tau; }
+
+// Steps: 1=vector field only, 2=+x-nullcline, 3=+y-nullcline, 4=+trajectories
+const pp = { step: 1, trails: [] };
+
+const ppStepLabels = [
+  '',  // unused (1-indexed)
+  'Next: add $\\dot{x}=0$ nullcline →',
+  'Next: add $\\dot{y}=0$ nullcline →',
+  'Next: click to add trajectories →',
+  'Complete — click anywhere to explore',
+];
+const ppStepHints = [
+  '',
+  'The vector field shows the velocity at every point in the plane.',
+  'Blue curve: where $\\dot{x}=0$. The state only moves vertically on this curve.',
+  'Yellow line: where $\\dot{y}=0$. The state only moves horizontally here. The nullclines cross at three fixed points — two stable (green) and one unstable (red).',
+  'Click anywhere to launch a trajectory. Notice which stable fixed point it flows toward.',
+];
+const ppStatusLabels = [
+  '',
+  'Step 1 / 4 — vector field',
+  'Step 2 / 4 — x-nullcline added',
+  'Step 3 / 4 — y-nullcline added',
+  'Step 4 / 4 — click to add trajectories',
+];
+
+function ppNextStep(){
+  if(pp.step < 4) pp.step++;
+  const btn = document.getElementById('pp-step-btn');
+  btn.textContent = pp.step < 4 ? ppStepLabels[pp.step] : ppStepLabels[4];
+  btn.disabled = pp.step === 4;
+  document.getElementById('pp-hint').textContent = ppStepHints[pp.step];
+  if(window.MathJax) MathJax.typesetPromise([document.getElementById('pp-hint'), btn]);
+}
+function ppClear(){ pp.trails = []; }
+function ppRestart(){
+  pp.step = 1; pp.trails = [];
+  const btn = document.getElementById('pp-step-btn');
+  btn.textContent = ppStepLabels[1];
+  btn.disabled = false;
+  document.getElementById('pp-hint').textContent = ppStepHints[1];
+  if(window.MathJax) MathJax.typesetPromise([document.getElementById('pp-hint'), btn]);
+}
+function ppLaunch(wx,wy){
+  if(pp.step < 4) return;  // only allow clicks in step 4
+  pp.trails.push({pts:[{x:wx,y:wy}], done:false,
+    color:`hsl(${Math.random()*260+40},70%,62%)`});
+}
+
+function ppDraw(){
+  const cv = document.getElementById('cv-pp');
+  if(!cv._W) setupCanvas('cv-pp');
+  const W=cv._W, H=cv._H, dpr=cv._dpr||1;
+  const g = cv.getContext('2d');
+  g.save(); g.scale(dpr,dpr);
+  g.fillStyle=themeC2(); g.fillRect(0,0,W,H);
+  drawDotGrid(g,W,H);
+
+  const pad=48;
+  const xR=[-2.2,2.2], yR=[-1.0,1.3];
+
+  function toS(x,y){
+    return [(x-xR[0])/(xR[1]-xR[0])*(W-2*pad)+pad,
+            H-pad-(y-yR[0])/(yR[1]-yR[0])*(H-2*pad)];
+  }
+
+  // ── STEP 1: Vector field ──
+  const grd = 14;
+  for(let i=0;i<=grd;i++){
+    for(let j=0;j<=grd;j++){
+      const x=xR[0]+i/grd*(xR[1]-xR[0]);
+      const y=yR[0]+j/grd*(yR[1]-yR[0]);
+      const dx=ppDx(x,y), dy=ppDy(x,y);
+      const mag=Math.hypot(dx,dy);
+      if(mag<0.001) continue;
+      const sc=0.1/mag;
+      const [sx,sy]=toS(x,y);
+      const ex=sx+dx*sc*(W-2*pad)/(xR[1]-xR[0]);
+      const ey=sy-dy*sc*(H-2*pad)/(yR[1]-yR[0]);
+      // Colour by magnitude: slow=dim, fast=bright
+      const bright = clamp(mag/1.5, 0.1, 0.7);
+      g.strokeStyle=`rgba(130,160,220,${bright})`;
+      g.lineWidth=1.2;
+      g.beginPath(); g.moveTo(sx,sy); g.lineTo(ex,ey); g.stroke();
+      // arrowhead
+      const ang=Math.atan2(ey-sy,ex-sx);
+      g.fillStyle=`rgba(130,160,220,${bright})`;
+      g.beginPath();
+      g.moveTo(ex,ey);
+      g.lineTo(ex-5*Math.cos(ang-0.4),ey-5*Math.sin(ang-0.4));
+      g.lineTo(ex-5*Math.cos(ang+0.4),ey-5*Math.sin(ang+0.4));
+      g.closePath(); g.fill();
+    }
+  }
+
+  // ── STEP 2: x-nullcline (ẋ=0) → y = x - x³/3 + I ──
+  if(pp.step >= 2){
+    g.beginPath();
+    let started=false;
+    for(let i=0;i<=300;i++){
+      const x=xR[0]+i/300*(xR[1]-xR[0]);
+      const y=x - x*x*x/3 + ppP.I;
+      if(y<yR[0]||y>yR[1]){ started=false; continue; }
+      const [sx,sy]=toS(x,y);
+      started?g.lineTo(sx,sy):(g.moveTo(sx,sy),started=true);
+    }
+    g.strokeStyle='#4d7cfe'; g.lineWidth=3; g.stroke();
+    // Label
+    const [lx,ly]=toS(-1.8, -1.8 - (-1.8)**3/3 + ppP.I);
+    const [slx,sly]=toS(-2.1, 0.6);
+    g.fillStyle='#4d7cfe'; g.font='bold 11px DM Sans'; g.textAlign='left';
+    g.fillText('ẋ = 0  (x-nullcline)',pad+4,pad+18);
+    g.fillStyle='rgba(77,124,254,0.08)';
+    // vertical motion hint text
+    g.fillStyle='rgba(77,124,254,0.55)'; g.font='10px DM Sans';
+    g.fillText('← motion is vertical here',pad+4,pad+32);
+  }
+
+  // ── STEP 3: y-nullcline (ẏ=0) → y = (x + d)/s ──
+  if(pp.step >= 3){
+    g.beginPath();
+    let started2=false;
+    for(let i=0;i<=300;i++){
+      const x=xR[0]+i/300*(xR[1]-xR[0]);
+      const y=(x+ppP.d)/ppP.s;
+      if(y<yR[0]||y>yR[1]){ started2=false; continue; }
+      const [sx,sy]=toS(x,y);
+      started2?g.lineTo(sx,sy):(g.moveTo(sx,sy),started2=true);
+    }
+    g.strokeStyle='#f7c948'; g.lineWidth=3; g.stroke();
+    g.fillStyle='#f7c948'; g.font='bold 11px DM Sans'; g.textAlign='left';
+    g.fillText('ẏ = 0  (y-nullcline)',pad+4,pad+52);
+    g.fillStyle='rgba(247,201,72,0.55)'; g.font='10px DM Sans';
+    g.fillText('← motion is horizontal here',pad+4,pad+66);
+
+    // Find and mark ALL fixed points (all intersections)
+    const fps=[];
+    for(let i=0;i<2000;i++){
+      const x0=xR[0]+i/2000*(xR[1]-xR[0]);
+      const x1=xR[0]+(i+1)/2000*(xR[1]-xR[0]);
+      const diff=x=>(x-x**3/3+ppP.I)-(x+ppP.d)/ppP.s;
+      if(diff(x0)*diff(x1)<0){
+        let lo=x0,hi=x1;
+        for(let k=0;k<20;k++){const m=(lo+hi)/2;diff(m)*diff(lo)<0?hi=m:lo=m;}
+        const xfp=(lo+hi)/2;
+        const yfp=(xfp+ppP.d)/ppP.s;
+        // Stability: slope of (y_xnc - y_ync) = (1-x^2) - 1/s
+        const dslope=(1-xfp**2) - 1/ppP.s;
+        fps.push({x:xfp,y:yfp,stable:dslope<0});
+      }
+    }
+    fps.forEach(({x:fpx,y:fpy,stable})=>{
+      const [sfx,sfy]=toS(fpx,fpy);
+      const col=stable?'#43d9ad':'#ff6b6b';
+      const glow=g.createRadialGradient(sfx,sfy,0,sfx,sfy,18);
+      glow.addColorStop(0,stable?'rgba(67,217,173,0.3)':'rgba(255,107,107,0.3)');
+      glow.addColorStop(1,'rgba(0,0,0,0)');
+      g.beginPath(); g.arc(sfx,sfy,18,0,Math.PI*2); g.fillStyle=glow; g.fill();
+      g.beginPath(); g.arc(sfx,sfy,7,0,Math.PI*2);
+      g.fillStyle='#fff'; g.fill();
+      g.strokeStyle=col; g.lineWidth=2.5; g.stroke();
+      g.fillStyle='#fff'; g.font='bold 10px DM Sans'; g.textAlign='left';
+      g.fillText(stable?'stable':'unstable',sfx+11,sfy+4);
+    });
+  }
+
+  // ── STEP 4: Trajectories ──
+  if(pp.step >= 4){
+    pp.trails.forEach(tr=>{
+      if(!tr.done){
+        for(let s=0;s<4;s++){
+          const last=tr.pts[tr.pts.length-1];
+          const dx=ppDx(last.x,last.y), dy=ppDy(last.x,last.y);
+          const nx=last.x+dx*0.02, ny=last.y+dy*0.02;
+          if(nx<xR[0]-0.3||nx>xR[1]+0.3||ny<yR[0]-0.3||ny>yR[1]+0.3){tr.done=true;break;}
+          tr.pts.push({x:nx,y:ny});
+          if(Math.hypot(dx,dy) < 0.004){ tr.done=true; break; }
+        }
+      }
+      if(tr.pts.length<2) return;
+      // Draw with fade-in opacity
+      g.beginPath();
+      tr.pts.forEach(({x,y},i)=>{
+        const [sx,sy]=toS(x,y);
+        i===0?g.moveTo(sx,sy):g.lineTo(sx,sy);
+      });
+      g.strokeStyle=tr.color; g.lineWidth=2.2; g.stroke();
+      // Moving dot at tip
+      const tip=tr.pts[tr.pts.length-1];
+      const [tx,ty]=toS(tip.x,tip.y);
+      g.beginPath(); g.arc(tx,ty,5,0,Math.PI*2);
+      g.fillStyle=tr.color; g.fill();
+      g.strokeStyle='rgba(255,255,255,0.4)'; g.lineWidth=1; g.stroke();
+    });
+
+    // Cursor hint if no trails yet
+    if(pp.trails.length===0){
+      g.fillStyle='rgba(67,217,173,0.4)';
+      g.font='13px DM Sans'; g.textAlign='center';
+      g.fillText('Click anywhere to launch a trajectory',W/2,H/2);
+    }
+  }
+
+  // ── Axes ──
+  const [ox,oy]=toS(0,0);
+  g.strokeStyle=themeRule(); g.lineWidth=1;
+  g.beginPath(); g.moveTo(pad,oy); g.lineTo(W-pad,oy); g.stroke();
+  g.beginPath(); g.moveTo(ox,pad); g.lineTo(ox,H-pad); g.stroke();
+  g.fillStyle=themeMuted(); g.font='11px DM Sans'; g.textAlign='center';
+  g.fillText('← x (fast variable) →',W/2,H-6);
+  g.save(); g.translate(12,H/2); g.rotate(-Math.PI/2);
+  g.fillText('← y (slow variable) →',0,0); g.restore();
+
+  document.getElementById('pp-status').textContent = ppStatusLabels[pp.step];
+  g.restore();
+  requestAnimationFrame(ppDraw);
+}
+
+document.getElementById('cv-pp').addEventListener('click', e=>{
+  const cv=e.target, r=cv.getBoundingClientRect();
+  const pad=48;
+  const xR=[-2.2,2.2], yR=[-1.0,1.3];
+  const W=r.width, H=r.height;
+  const wx=xR[0]+(e.clientX-r.left-pad)/(W-2*pad)*(xR[1]-xR[0]);
+  const wy=yR[0]+(H-pad-(e.clientY-r.top))/(H-2*pad)*(yR[1]-yR[0]);
+  ppLaunch(wx,wy);
+});
+
+// Init hint text
+document.getElementById('pp-hint').textContent = ppStepHints[1];
+document.getElementById('pp-step-btn').textContent = ppStepLabels[1];
+ppDraw();
+</script>
+</body>
+</html>
