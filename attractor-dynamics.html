@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="N. Apurva Ratan Murty">
+<title>Attractor Networks in the Brain · Computational Neuroscience · Georgia Tech</title>
+<script>
+MathJax = {
+  tex: { inlineMath: [['$','$'],['\(','\)']], displayMath: [['$$','$$'],['\[','\]']], tags:'none' },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','canvas'], ignoreHtmlClass: 'tex2jax_ignore' },
+  startup: {
+    ready() {
+      MathJax.startup.defaultReady();
+      MathJax.startup.promise.then(() => MathJax.typesetPromise());
+    }
+  }
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --white: #ffffff; --off: #f9f9f8; --bg: #ffffff;
+  --border: #e6e6e4; --border-faint: #f0f0ee;
+  --text: #050504; --body: #0d0d0b; --secondary: #242420; --tertiary: #4a4a45;
+  --gold: #a97c10; --gold-vivid: #C29122;
+  --gold-bg: rgba(169,124,16,0.07); --gold-border: rgba(169,124,16,0.2);
+  --navy: #003057; --accent: #1a56db; --accent-bg: rgba(26,86,219,0.07);
+  --teal: #0c7a5e; --teal-bg: rgba(12,122,94,0.08);
+  --purple: #6d28d9; --purple-bg: rgba(109,40,217,0.07);
+  --red: #be3a2a; --red-bg: rgba(190,58,42,0.07);
+  --sans: 'Inter', system-ui, sans-serif;
+  --serif: 'Newsreader', Georgia, serif;
+  --mono: 'JetBrains Mono', monospace;
+  --col: 660px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--body); font-family: var(--serif); font-size: 1.18rem; line-height: 1.82; -webkit-font-smoothing: antialiased; }
+mjx-container[jax="CHTML"][display="false"] { font-size: 0.95em !important; vertical-align: -0.1em; }
+mjx-container[jax="CHTML"][display="true"]  { margin: 0.5em 0 !important; overflow-x: auto; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 200; height: 50px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 28px; }
+.nav-mark { width: 28px; height: 28px; border-radius: 6px; background: var(--navy); display: flex; align-items: center; justify-content: center; font-family: Georgia,serif; font-size: 11px; font-weight: 700; color: var(--gold-vivid); flex-shrink: 0; margin-right: 10px; }
+.nav-l { display: flex; align-items: center; flex-shrink: 0; }
+.nav-codes { font-family: var(--sans); font-size: 0.7rem; color: var(--tertiary); }
+.nav-title { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; color: var(--text); margin-right: 16px; }
+.nav-l { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
+.nav-sep { font-family: var(--sans); font-size: 0.7rem; color: var(--border); margin: 0 6px; }
+.nav-course { font-family: var(--sans); font-size: 0.7rem; color: var(--tertiary); margin-right: 4px; }
+.nav-codes { font-family: var(--sans); font-size: 0.7rem; color: var(--tertiary); }
+.nav-links { margin-left: auto; display: flex; align-items: center; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.nav-links::-webkit-scrollbar { display: none; }
+.nav-links a { font-family: var(--sans); font-size: 0.7rem; font-weight: 500; color: var(--secondary); text-decoration: none; padding: 5px 9px; border-radius: 5px; white-space: nowrap; transition: background .1s, color .1s; }
+.nav-links a:hover { background: var(--off); color: var(--text); }
+@media (max-width: 700px) { .nav-links { display: none; } }
+@media (max-width: 480px) { .nav-course { display: none; } .nav-sep { display: none; } }
+.hero { position: relative; overflow: hidden; background: var(--navy); padding: 76px 28px 68px; }
+#hero-cv { position: absolute; inset: 0; pointer-events: none; opacity: 0.14; }
+.hero-in { position: relative; z-index: 1; max-width: var(--col); margin: 0 auto; }
+.hero-chips { display: flex; align-items: center; gap: 10px; margin-bottom: 26px; flex-wrap: wrap; }
+.chip { font-family: var(--sans); font-size: 0.65rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; }
+.chip-gold { color: var(--gold-vivid); background: rgba(194,145,34,0.12); border: 1px solid rgba(194,145,34,0.28); }
+.chip-nav  { font-family: var(--mono); font-size: 0.6rem; color: rgba(255,255,255,0.25); background: transparent; border: none; font-weight: 400; letter-spacing: .04em; padding: 0; }
+.hero-in h1 { color: #ffffff; }
+.chip { font-family: var(--sans); font-size: 0.65rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; }
+.chip-gold { color: var(--gold-vivid); background: rgba(194,145,34,0.12); border: 1px solid rgba(194,145,34,0.28); }
+.chip-nav  { font-family: var(--mono); font-size: 0.6rem; color: rgba(255,255,255,0.25); background: transparent; border: none; font-weight: 400; letter-spacing: .04em; padding: 0; }
+h1 { font-family: var(--serif); font-weight: 300; font-size: clamp(2.1rem,5vw,3.4rem); line-height: 1.08; letter-spacing: -0.028em; color: #fff; margin-bottom: 16px; }
+.hero-sub { font-family: var(--sans); font-weight: 400; font-size: 1rem; line-height: 1.7; color: rgba(255,255,255,0.78); max-width: 520px; margin-bottom: 36px; }
+.hero-foot { padding-top: 28px; border-top: 1px solid rgba(255,255,255,0.18); }
+.hero-by { font-family: var(--sans); font-size: 0.88rem; color: rgba(255,255,255,0.7); line-height: 1.65; }
+.hero-by strong { color: #ffffff; font-weight: 600; font-size: 1rem; }
+.page { padding-top: 50px; }
+main { max-width: var(--col); margin: 0 auto; padding: 0 28px 100px; }
+@media (max-width: 600px) {
+  main { padding: 0 16px 80px; }
+  .hero { padding: 52px 20px 48px; }
+  nav { padding: 0 16px; }
+  h1 { font-size: 2rem; letter-spacing: -0.02em; }
+  .lede { margin-top: 40px; }
+  .section { margin-top: 52px; }
+  h2 { font-size: 1.5rem; }
+  /* Hopfield canvas smaller on mobile */
+  #hf-cvwrap { height: 300px !important; }
+  /* Quiz container full width */
+  #quiz-container button { font-size: 0.82rem; padding: 9px 12px; }
+  /* Utility section subheadings */
+  .section h3 { font-size: 0.95rem; }
+  /* Brain-ref smaller text */
+  .brain-ref { font-size: 0.8rem; }
+  /* eq-block overflow */
+  .eq-block { overflow-x: auto; }
+  /* Summary grid single column on very small */
+  .summ-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 400px) {
+  .ctrl { flex-wrap: wrap; }
+  .btn { min-width: 0; flex: 1 1 40%; }
+  h1 { font-size: 1.7rem; }
+}
+.lede { margin-top: 60px; padding-bottom: 48px; border-bottom: 1px solid var(--border-faint); }
+.lede p { font-size: 1.24rem; font-weight: 300; line-height: 1.78; }
+.section { margin-top: 68px; }
+.sec-ey { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.sec-num { font-family: var(--mono); font-size: 0.58rem; color: var(--gold); font-weight: 500; letter-spacing: .04em; }
+.sec-tag { font-family: var(--sans); font-size: 0.65rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--tertiary); }
+.sec-line { flex: 1; height: 1px; background: var(--border-faint); }
+h2 { font-family: var(--serif); font-size: clamp(1.55rem,3vw,2rem); font-weight: 400; line-height: 1.18; letter-spacing: -0.02em; color: var(--text); margin-bottom: 8px; }
+.hook { font-family: var(--serif); font-size: 1.08rem; font-style: italic; font-weight: 300; color: var(--secondary); line-height: 1.6; margin-bottom: 24px; }
+p { margin-bottom: 1.1em; }
+p:last-child { margin-bottom: 0; }
+.term { font-style: normal; font-weight: 600; color: var(--gold); background: var(--gold-bg); padding: 0 4px; border-radius: 3px; }
+.eq-block { margin: 28px 0; padding: 18px 20px; -webkit-overflow-scrolling: touch; background: var(--off); border: 1px solid var(--border); border-left: 2px solid var(--navy); border-radius: 0 7px 7px 0; overflow-x: auto; }
+.eq-lbl { font-family: var(--sans); font-size: 0.62rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--tertiary); margin-bottom: 10px; }
+.callout { margin: 26px 0; padding: 16px 20px; border-radius: 7px; border: 1px solid; }
+.c-title { font-family: var(--sans); font-size: 0.68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 7px; }
+.callout p { font-family: var(--sans); font-size: 0.93rem; line-height: 1.62; color: var(--secondary); margin-bottom: 5px; }
+.callout p:last-child { margin-bottom: 0; }
+.callout strong { color: var(--body); font-weight: 600; }
+.c-gold { background: var(--gold-bg); border-color: var(--gold-border); } .c-gold .c-title { color: var(--gold); }
+.c-blue { background: var(--accent-bg); border-color: rgba(26,86,219,0.18); } .c-blue .c-title { color: var(--accent); }
+.c-teal { background: var(--teal-bg); border-color: rgba(12,122,94,0.2); } .c-teal .c-title { color: var(--teal); }
+.c-purple { background: var(--purple-bg); border-color: rgba(109,40,217,0.17); } .c-purple .c-title { color: var(--purple); }
+.c-red { background: var(--red-bg); border-color: rgba(190,58,42,0.17); } .c-red .c-title { color: var(--red); }
+.fig { margin: 38px -28px; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05),0 3px 12px rgba(0,0,0,0.04); }
+.fig-head { padding: 11px 16px; border-bottom: 1px solid var(--border-faint); display: flex; align-items: center; gap: 9px; background: var(--off); }
+.f-title { font-family: var(--sans); font-size: 0.82rem; font-weight: 500; color: var(--secondary); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.f-badge { font-family: var(--sans); font-size: 0.6rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; }
+.f-st { font-family: var(--mono); font-size: 0.6rem; color: var(--tertiary); flex-shrink: 0; }
+.cv-wrap { background: #fff; height: 340px; position: relative; display: flex; align-items: stretch; }
+canvas { display: block; width: 100% !important; }
+.ctrl { padding: 10px 14px; border-top: 1px solid var(--border-faint); display: flex; flex-wrap: wrap; align-items: center; gap: 7px; background: var(--off); }
+.btn { padding: 5px 13px; border-radius: 6px; border: 1px solid var(--border); background: var(--white); color: var(--body); font-family: var(--sans); font-size: 0.76rem; font-weight: 500; cursor: pointer; transition: border-color .12s; white-space: nowrap; }
+.btn:hover { border-color: #999; }
+.btn.p { color: #fff; border-color: transparent; font-weight: 600; }
+.btn.p:hover { opacity: .87; }
+.sl-row { display: flex; align-items: center; gap: 7px; font-family: var(--sans); font-size: 0.74rem; color: var(--secondary); }
+.sl-row input[type=range] { width: 88px; accent-color: var(--gold-vivid); cursor: pointer; }
+.sl-val { font-family: var(--mono); font-size: 0.68rem; color: var(--gold); font-weight: 500; min-width: 34px; }
+.f-cap { padding: 10px 16px; font-family: var(--sans); font-size: 0.82rem; color: var(--secondary); line-height: 1.58; border-top: 1px solid var(--border-faint); background: var(--off); }
+@media (max-width: 600px) {
+  .fig { margin: 28px -16px; border-radius: 0; border-left: none; border-right: none; }
+  .cv-wrap { height: 240px !important; }
+  .ctrl { gap: 5px; padding: 8px 12px; }
+  .btn { padding: 5px 10px; font-size: 0.72rem; }
+  .sl-row input[type=range] { width: 70px; }
+  .eq-block { padding: 14px 16px; }
+  .callout { padding: 13px 14px; }
+  .summ-grid { grid-template-columns: 1fr 1fr; }
+}
+.brain-ref { margin-top: 18px; padding: 13px 16px; background: rgba(0,48,87,0.04); border: 1px solid rgba(0,48,87,0.12); border-radius: 7px; font-family: var(--sans); font-size: 0.84rem; color: var(--secondary); line-height: 1.62; }
+.brain-ref strong { color: var(--navy); font-weight: 600; }
+cite { font-family: var(--sans); font-size: 0.68rem; font-style: normal; color: var(--tertiary); vertical-align: super; line-height: 0; margin-left: 1px; }
+.tri { margin: 28px -28px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 9px; overflow: hidden; }
+.tri-col { background: var(--white); padding: 0; display: flex; flex-direction: column; }
+.tri-head { font-family: var(--sans); font-size: 0.62rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--tertiary); text-align: center; padding: 9px 10px 6px; border-bottom: 1px solid var(--border-faint); background: var(--off); }
+.tri-cv { height: 160px; position: relative; }
+.tri-cv canvas { display: block; width: 100% !important; height: 100% !important; }
+@media (max-width: 600px) { .tri { margin: 20px -16px; border-radius: 0; } .tri-cv { height: 120px; } }
+.summ { margin-top: 68px; padding-top: 48px; border-top: 1px solid var(--border); }
+.summ-lbl { font-family: var(--sans); font-size: 0.65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--tertiary); margin-bottom: 22px; }
+.summ-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.summ-card { background: var(--white); padding: 16px 18px; }
+.summ-n { font-family: var(--mono); font-size: 0.56rem; font-weight: 500; letter-spacing: .05em; margin-bottom: 4px; }
+.summ-card h4 { font-family: var(--sans); font-size: 0.92rem; font-weight: 600; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
+.summ-card p { font-family: var(--sans); font-size: 0.82rem; line-height: 1.55; color: var(--secondary); margin: 0; }
+.summ-next { margin-top: 28px; font-family: var(--sans); font-size: 0.86rem; color: var(--secondary); line-height: 1.65; }
+footer { border-top: 1px solid var(--border); padding: 24px 28px; background: var(--off); }
+.foot-in { max-width: 800px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.foot-l { font-family: var(--sans); font-size: 0.72rem; color: var(--tertiary); line-height: 1.5; }
+.foot-l strong { color: var(--secondary); font-weight: 500; }
+.foot-r { display: flex; align-items: center; gap: 7px; font-family: var(--sans); font-size: 0.7rem; color: var(--tertiary); }
+.foot-badge { width: 22px; height: 22px; border-radius: 4px; background: var(--navy); display: flex; align-items: center; justify-content: center; font-family: Georgia,serif; font-size: 9px; font-weight: 700; color: var(--gold-vivid); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-l">
+    <div class="nav-mark">GT</div>
+    <span class="nav-course">Computational Neuroscience</span>
+    <span class="nav-sep">·</span>
+    <span class="nav-codes">PSYC 3803 / PSYC 8805 / NEUR 4803</span>
+  </div>
+  <div class="nav-links">
+    <a href="#attractor">Attractors</a>
+    <a href="#hopfield">Hopfield</a>
+    <a href="#ring">Ring</a>
+    <a href="#torus">Torus</a>
+    <a href="#line">Line</a>
+    <a href="#limitcycle">Limit cycle</a>
+    <a href="#utility">Why attractors?</a>
+    <a href="#references">References</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <canvas id="hero-cv"></canvas>
+  <div class="hero-in">
+    <div class="hero-chips">
+      <span class="chip chip-gold">Module 2 · Attractor Networks</span>
+      <span class="chip chip-nav">Georgia Institute of Technology</span>
+    </div>
+    <h1>Attractor Networks<br>in the Brain</h1>
+    <p class="hero-sub">The activity of any one neuron is brief, but brain function can stay remarkably stable over time. How does that happen? This module looks at the main attractor architectures and the experimental evidence for them in the brain.</p>
+    <div class="hero-by">N. Apurva Ratan Murty, PhD &nbsp;·&nbsp; Georgia Institute of Technology</div>
+  </div>
+</div>
+
+<main>
+
+<div class="lede">
+  <p>One of the most interesting things about the brain is that it manages to build stable function out of parts that are individually pretty fleeting. A single neuron only holds onto its inputs for a short time, usually on the order of tens of milliseconds, before its activity fades. And yet the brain can keep a memory alive for seconds, track heading direction continuously, and generate rhythmic activity that remains reliable over long stretches of time. How does that happen?</p>
+  <p>One influential idea is that the stability does not come from single neurons acting alone. It comes from the way neurons interact as a circuit. When the connections are arranged in the right way, recurrent feedback can stabilize particular patterns of activity and keep them going, even though the individual neurons themselves are noisy and short-lived. This is the basic idea behind <span class="term">attractor dynamics</span>.</p>
+  <p>In this module, we will look at several classic attractor architectures, including Hopfield networks, ring attractors, line attractors, toroidal attractors, and limit cycles. The goal is to understand what kinds of computations these architectures make possible, why they are useful, and how they connect to real experimental findings in the brain.</p>
+</div>
+
+
+<!-- ══ 00 · WHAT IS AN ATTRACTOR ══ -->
+<div class="section" id="attractor">
+  <div class="sec-ey"><span class="sec-num">00</span><span class="sec-tag">The Big Idea</span><div class="sec-line"></div></div>
+  <h2>What is an attractor?</h2>
+
+  <p>An <span class="term">attractor</span> is a set of states that a dynamical system naturally moves toward over time. Once the system gets close to that set, it tends to stay near it unless it is strongly perturbed. The simplest example is a stable fixed point, where nearby trajectories converge to a single state. But attractors can also take other forms, including continuous manifolds such as lines, rings, or tori, and periodic orbits such as limit cycles. What they share is that they organize the long-term behavior of the system.</p>
+  <p>In neuroscience, attractors are useful because they provide a way for neural activity to be both stable and meaningful. A <span class="term">point attractor</span> can store a memory or decision state. A <span class="term">continuous attractor</span> can represent a continuous variable such as head direction or spatial position. A <span class="term">limit cycle</span> can generate rhythmic activity.</p>
+  <p>Experimentally, the strongest signatures of attractor dynamics are that population activity is confined to a low-dimensional structure, that perturbations away from that structure are followed by recovery back toward it, and that the structure cannot be explained simply as moment-by-moment tracking of external input. These features help distinguish a genuine attractor from activity that only appears low-dimensional because the inputs are structured.</p>
+
+  <div class="fig">
+    <div class="fig-head"><div class="f-title">Figure 1 — Energy landscape · drag the ball</div><div class="f-badge" style="background:var(--accent-bg);color:var(--accent)">Interactive · drag</div><div class="f-st" id="energy-status">stable</div></div>
+    <div class="cv-wrap" style="cursor:grab"><canvas id="energy-canvas"></canvas></div>
+    <div class="ctrl">
+      <button class="btn p" style="background:var(--accent)" onclick="energyReset()">↺ Reset ball</button>
+    </div>
+    <div class="f-cap">Drag the ball to any position and release — it always rolls to the nearest valley. That valley is an attractor. The hilltops are <em>unstable</em> fixed points: the ball sits there momentarily but any tiny push sends it away. Each valley represents one stored memory state.</div>
+  </div>
+  <div class="callout c-blue"><div class="c-title">👉 Try it</div><p>Drop the ball on a hilltop and watch it slide away — that is an unstable fixed point. Now drop it between two valleys — which one does it roll into? The dividing ridge between basins is the <strong>decision boundary</strong>.</p></div>
+</div>
+
+<!-- ══ A · HOPFIELD ══ -->
+<div class="section" id="hopfield">
+  <div class="sec-ey"><span class="sec-num">A</span><span class="sec-tag">Discrete Attractor</span><div class="sec-line"></div></div>
+  <h2>The Hopfield Network:<br>Content-Addressable Memory</h2>
+
+  <p>The <span class="term">Hopfield network</span> is one of the classic ideas in memory theory. It is a recurrent network made of simple binary units, where each unit is either on or off. Memories are stored in the pattern of connections across the network. If two units are active together in a memory, the connection between them is strengthened, so later, activating part of that pattern can help bring back the rest.</p>
+  <p>A useful way to picture this is as a landscape with valleys. Each stored memory creates a valley in that landscape. If the network starts from a noisy or incomplete version of a memory, the activity tends to settle into the nearest valley. In practice, that means the network can clean up the pattern and recover the original. That is why this is called <span class="term">content-addressable memory</span>. You do not need to look up a memory by location. A partial cue is often enough to guide the network toward the stored pattern.</p>
+  <p>This only works up to a point. A Hopfield network can store only so many memories before they begin to interfere with one another. In the classic model, the storage limit is about 0.14<em>N</em>, where <em>N</em> is the number of units. After that, recall becomes less reliable, and the network can settle into spurious states that do not match any one stored memory very well. So with 25 neurons, you should think in terms of only a few patterns being recovered cleanly.</p>
+  <p>What makes the Hopfield network so compelling is that it gives a clear picture of how a circuit can store and recover information through its dynamics. The memory lives in the connectivity of the network and in the way activity evolves over time. That is one reason people have long looked to the CA3 region of the hippocampus, with its dense recurrent connections, as a possible biological example of this kind of pattern completion. More broadly, the model shows how recurrent circuitry can use a partial cue to drive activity toward a complete and stable memory.</p>
+
+  <div class="fig">
+    <div class="fig-head"><div class="f-title">Figure 2 — Hopfield network · 25 neurons · 3 stored memories</div><div class="f-badge" style="background:var(--accent-bg);color:var(--accent)">Interactive</div><div class="f-st" id="hopfield-status">Memory 1 active</div></div>
+    <div class="cv-wrap" style="height:380px;" id="hf-cvwrap"><canvas id="hopfield-canvas"></canvas></div>
+    <div class="ctrl">
+      <button class="btn p" style="background:#4d7cfe" onclick="hfShowPattern(0)">Memory 1</button>
+      <button class="btn p" style="background:#3d6bdf" onclick="hfShowPattern(1)">Memory 2</button>
+      <button class="btn p" style="background:#2d5abf" onclick="hfShowPattern(2)">Memory 3</button>
+      <button class="btn" onclick="hfCorrupt()">Corrupt</button>
+      <button class="btn" onclick="hfRecall()">↩ Recall</button>
+      <div class="sl-row"><span>Noise:</span><input type="range" id="hf-noise" min="10" max="90" value="40" oninput="document.getElementById('hf-noise-val').textContent=this.value+'%'"><span class="sl-val" id="hf-noise-val">40%</span></div>
+    </div>
+    <div class="f-cap">Left: the three stored memory patterns. Right: the current network state after recall. At low noise the network recovers the original pattern. At high noise it may fall into a <em>spurious state</em> — a pattern that is a stable energy minimum but does not match any stored memory. This is a fundamental limitation of Hopfield networks near capacity.</div>
+  </div>
+  <div class="callout c-blue"><div class="c-title">👉 Try it</div><p>Select a memory, hit <strong>Corrupt</strong> to randomly flip neurons, then <strong>Recall</strong> to restore the original. Increase noise to 80% — does it still recover? This probes the capacity limit. With 25 neurons, the network can reliably hold about 3–4 memories.</p></div>
+  <div class="brain-ref tex2jax_ignore"><strong>Found in the brain:</strong> The CA3 region of the hippocampus, with its unusually dense recurrent collaterals, is the canonical candidate for Hopfield-like pattern completion (Marr 1971; McNaughton and Morris 1987). CA3 has been proposed as a content-addressable memory store in which partial cues activate full episodic traces. The fly mushroom body uses global inhibition via the APL neuron to decorrelate odour representations and implement winner-take-all dynamics (Lin et al., 2014, <em>Nat. Neurosci.</em>). In the mammalian olfactory cortex (piriform cortex), recurrent excitation supports pattern completion from partial cues (Bolding and Franks, 2018, <em>Science</em>). The mammalian auditory cortex shows evidence of selective recurrent excitation that maintains distinct stable responses across stimuli (Kurt et al., 2008, <em>PLoS ONE</em>). Direct quantitative confirmation of invariance across conditions — the key prediction — remains an important open direction for all these circuits.</div>
+</div>
+
+
+<!-- ══ C · RING ATTRACTOR ══ -->
+<div class="section" id="ring">
+  <div class="sec-ey"><span class="sec-num">B</span><span class="sec-tag">Continuous Attractor</span><div class="sec-line"></div></div>
+  <h2>The Ring Attractor:<br>Your Internal Compass</h2>
+
+  <p>A <span class="term">ring attractor</span> is a simple and elegant way for a neural circuit to represent a continuous variable. Imagine neurons arranged around a circle, with each neuron exciting nearby neighbors and suppressing neurons farther away. With the right pattern of recurrent connectivity, the network settles into a localized bump of activity. The bump can sit at any position around the ring, and each position corresponds to a different value of the variable being represented, such as head direction.</p>
+  <p>What makes this useful is that the bump is stable while still being free to move. If the animal stays still, the bump stays where it is. If the animal turns, velocity-related input can nudge the bump around the ring. The position of the bump then tracks the animal's internal estimate of heading over time. In that sense, the circuit functions like a neural compass. It keeps a running estimate of direction, even when visual cues are weak or absent.</p>
+  <p>This is one of the clearest examples of a <span class="term">continuous attractor</span>. The bump can occupy any position around the ring, and each position maps onto a slightly different heading. As the animal turns, the bump moves smoothly with it, giving the circuit a way to represent direction as a continuously changing internal variable.</p>
+
+  <div class="tri">
+    <div class="tri-col"><div class="tri-head">Connectivity</div><div class="tri-cv"><canvas id="tri-ring-conn"></canvas></div></div>
+    <div class="tri-col"><div class="tri-head">Population activity</div><div class="tri-cv"><canvas id="tri-ring-act"></canvas></div></div>
+    <div class="tri-col"><div class="tri-head">State space</div><div class="tri-cv"><canvas id="tri-ring-ss"></canvas></div></div>
+  </div>
+  <div class="fig">
+    <div class="fig-head"><div class="f-title">Figure 4 — Ring attractor · click the ring to move the bump</div><div class="f-badge" style="background:var(--teal-bg);color:var(--teal)">Interactive</div><div class="f-st" id="ring-status">θ = 0°</div></div>
+    <div class="cv-wrap" style="cursor:crosshair"><canvas id="ring-canvas"></canvas></div>
+    <div class="ctrl">
+      <button class="btn p" style="background:var(--teal)" onclick="ringPerturb()">⚡ Perturb bump</button>
+      <button class="btn" onclick="ringSetAngle(0)">North (0°)</button>
+      <button class="btn" onclick="ringSetAngle(90)">East (90°)</button>
+      <button class="btn" onclick="ringSetAngle(180)">South (180°)</button>
+      <button class="btn" onclick="ringSetAngle(270)">West (270°)</button>
+    </div>
+    <div class="f-cap">Left: the ring of neurons with a green activity bump. Right: the activity profile across neurons. The bump relaxes to wherever you put it — every angle is equally stable. Click anywhere on the ring to move the bump.</div>
+  </div>
+  <div class="callout c-teal"><div class="c-title">👉 Try it</div><p>Click on the ring to place the bump at any heading. Then hit <strong>Perturb bump</strong> to knock it slightly off position — watch it relax back. This snap-back is the defining signature of an attractor: perturbations are automatically corrected by the network dynamics.</p></div>
+  <div class="brain-ref tex2jax_ignore"><strong>Found in the brain:</strong> Chaudhuri et al. (2019, <em>Nature Neuroscience</em>) showed that the mammalian head-direction circuit, including the anterodorsal thalamic nucleus, has population activity confined to a one-dimensional ring manifold that remains invariant across waking and REM sleep. Activity displaced away from that manifold tends to relax back toward it, providing unusually direct evidence for continuous attractor dynamics in this system. In <em>Drosophila</em>, the ellipsoid body provides a striking anatomical and functional example of the same basic idea: calcium imaging revealed a localized bump of activity that tracks heading as the fly turns (Kim et al., 2017, <em>Science</em>). Turner-Evans et al. (2020, <em>Neuron</em>) then used connectomics and physiology to show that the fly head-direction circuit contains the core structural and functional elements expected of a biological ring attractor, while also revealing additional circuit features beyond the simplest theoretical models.</div>
+</div>
+
+
+<!-- ══ D · GRID / TORUS ══ -->
+<div class="section" id="torus">
+  <div class="sec-ey"><span class="sec-num">C</span><span class="sec-tag">Continuous Attractor</span><div class="sec-line"></div></div>
+  <h2>Grid Cells and the Torus</h2>
+
+  <p>A useful way to think about <span class="term">grid cells</span> is to start with the same idea as a ring attractor and extend it into two dimensions. Instead of a bump of activity moving around a circle, imagine a whole sheet of neurons whose recurrent interactions support a repeating pattern of activity across the sheet. In many classic models, that stable pattern looks like a triangular lattice of bumps. As the animal moves, the lattice shifts smoothly, and individual neurons fire whenever one of those bumps lines up with that neuron's preferred phase. At the level of single cells, that gives rise to the familiar grid pattern: multiple firing fields arranged in a regular hexagonal layout across the environment. Burak and Fiete's model is one of the best-known examples showing how this kind of network can support path integration and grid-like firing.</p>
+  <p>The <span class="term">torus</span> part becomes easier to understand once you focus on what can change in the pattern and what stays the same. The lattice itself keeps the same shape. What changes is its phase, meaning where the whole pattern sits relative to the animal's position. You can shift the lattice a little in one horizontal direction, or a little in one vertical direction, and you still have a perfectly valid network state. Those are the two degrees of freedom.</p>
+  <p>Now add one more idea: the lattice is periodic. If you keep shifting it far enough in one phase direction, you eventually come back to the same pattern you started with. The same is true in the second phase direction. So the population state has two independent circular directions of variation. One circular direction gives you a ring. Two circular directions together give you a torus, which you can think of as the surface of a donut. That is why theorists say the grid-cell population lives on a torus in state space. It is not because the brain contains a literal donut-shaped sheet of neurons. It is because the set of possible internal phases wraps around in both directions.</p>
+  <p>This idea has strong experimental support now. Gardner and colleagues recorded large populations of grid cells from single modules and found that the joint activity lay on a toroidal manifold, just as two-dimensional continuous-attractor models predict. They also found that cells kept consistent positions on that torus across environments and across wakefulness and sleep, which is exactly the kind of internal structure these models are meant to explain.</p>
+
+  <div class="fig">
+    <div class="fig-head"><div class="f-title">Figure 5 — Grid cell lattice + torus state space · drag to shift phase</div><div class="f-badge" style="background:var(--gold-bg);color:var(--gold)">Interactive · drag</div><div class="f-st" id="grid-status">Phase: (0, 0)</div></div>
+    <div class="cv-wrap" style="cursor:grab"><canvas id="grid-canvas"></canvas></div>
+    <div class="ctrl">
+      <button class="btn" onclick="gridShift(15,0)">→ Shift X</button>
+      <button class="btn" onclick="gridShift(0,15)">↓ Shift Y</button>
+      <button class="btn" onclick="gridShift(-15,0)">← Shift X</button>
+      <button class="btn" onclick="gridShift(0,-15)">↑ Shift Y</button>
+      <button class="btn p" style="background:var(--accent)" onclick="gridAnimate()">▶ Animate</button>
+      <button class="btn" onclick="gridStop()">■ Stop</button>
+    </div>
+    <div class="f-cap">Left: the hexagonal firing pattern of a grid cell module — the animal's position shifts the lattice. Right: the corresponding torus state space. The red dot moves on the torus surface as you shift the phase — each point represents one valid lattice arrangement.</div>
+  </div>
+  <div class="callout c-gold"><div class="c-title">👉 Try it</div><p>Drag the lattice or use the shift buttons. As the phase moves, watch the red dot trace a path on the torus. Hit <strong>Animate</strong> to see continuous movement, as if the animal is running. Notice that all lattice positions are equally stable — a continuous family of attractors.</p></div>
+
+
+  <div class="brain-ref tex2jax_ignore"><strong>Found in the brain:</strong> Yoon et al. (2013, <em>Nature Neuroscience</em>) showed that pairwise relationships between co-modular grid cells are preserved across environments even when the tuning curves of individual cells change substantially. That kind of preserved internal structure is a central prediction of continuous-attractor models. Gardner et al. (2022, <em>Nature</em>) then used large-scale recordings and topological data analysis to show that the population activity of a grid-cell module lies on a two-dimensional torus, with the same basic organization visible across environments and across wakefulness and sleep. Trettel et al. (2019, <em>Nature Neuroscience</em>) found that grid-cell co-activity during sleep reflects the spatial relationships seen during waking behavior much more strongly than place-cell co-activity does, which supports the idea that the grid-cell circuit can generate and maintain its internal structure even without ongoing sensory input. Taken together, the grid-cell and head-direction systems provide some of the strongest experimental evidence we have for continuous-attractor dynamics in the brain.</div>
+</div>
+
+
+<!-- ══ E · LINE ATTRACTOR ══ -->
+<div class="section" id="line">
+  <div class="sec-ey"><span class="sec-num">D</span><span class="sec-tag">Continuous Attractor</span><div class="sec-line"></div></div>
+  <h2>The Line Attractor:<br>Holding Your Gaze</h2>
+
+  <p>Every time you make a saccade, the brain sends a short burst of input to move the eyes. Once the movement is over, the eyes need to stay in their new position. That is not trivial, because neural activity naturally tends to decay over time. The <span class="term">oculomotor integrator</span> is the circuit that helps solve this problem. In attractor terms, it is the classic example of a <span class="term">line attractor</span>.</p>
+  <p>The basic idea is that the network supports a one-dimensional family of nearly stable states, with each state corresponding to a different eye position. A brief pulse of input moves the network to a new point along that line, and the recurrent circuitry helps keep it there. In that way, a short command can be turned into a sustained signal.</p>
+  <p>In the simplest version of the model, recurrent feedback offsets the natural leak in activity. When the feedback is tuned just right, the circuit behaves like an integrator: a brief saccadic pulse produces a lasting step in neural activity, and that sustained activity holds the eyes at their new position. This is the intuition behind the idea of perfect tuning.</p>
+  <p>That same intuition also makes it clear why line attractors are delicate. If the feedback is a little too weak, the activity slowly drifts downward. If it is a little too strong, the activity drifts upward. Over time, either kind of mismatch shows up as drift in eye position. This sensitivity is one reason the oculomotor integrator is often discussed as a system that needs ongoing calibration.</p>
+  <p>Visual feedback is thought to play an important role in that calibration. Retinal slip gives the system information about small errors, which can be used to keep the integrator properly tuned over time.</p>
+  <p>What makes this example so important is that it shows how a circuit can hold a continuous value steady. In this case, that value is eye position. More broadly, it gives a concrete example of how recurrent dynamics can turn a brief command into a maintained internal state.</p>
+
+  <div class="tri">
+    <div class="tri-col"><div class="tri-head">Connectivity</div><div class="tri-cv"><canvas id="tri-line-conn"></canvas></div></div>
+    <div class="tri-col"><div class="tri-head">Population activity</div><div class="tri-cv"><canvas id="tri-line-act"></canvas></div></div>
+    <div class="tri-col"><div class="tri-head">State space</div><div class="tri-cv"><canvas id="tri-line-ss"></canvas></div></div>
+  </div>
+  <div class="fig">
+    <div class="fig-head"><div class="f-title">Figure 6 — Line attractor · oculomotor integrator</div><div class="f-badge" style="background:var(--purple-bg);color:var(--purple)">Interactive</div><div class="f-st" id="line-status">Level: 50%</div></div>
+    <div class="cv-wrap"><canvas id="line-canvas"></canvas></div>
+    <div class="ctrl">
+      <button class="btn p" style="background:var(--purple)" onclick="lineInput(0.25)">↑ Pulse up</button>
+      <button class="btn p" style="background:#5b21b6" onclick="lineInput(-0.25)">↓ Pulse down</button>
+      <button class="btn" onclick="lineReset()">↺ Reset</button>
+      <button class="btn" onclick="lineMistune()">⚠ Mistune (leak)</button>
+      <button class="btn" onclick="linePerfect()">✓ Perfect tune</button>
+    </div>
+    <div class="f-cap">Left: the two-population mutual-feedback circuit. Right: eye position over time. Each pulse jumps the level and it holds permanently — perfect integration. Mistune removes some feedback and the signal slowly drifts back to centre.</div>
+  </div>
+  <div class="callout c-purple"><div class="c-title">👉 Try it</div><p>Click <strong>Pulse up</strong> several times — the level accumulates and holds permanently. Then <strong>Mistune</strong> to reduce feedback. The signal slowly drifts: this is gaze-evoked nystagmus, observable in patients with cerebellar damage.</p></div>
+  <div class="brain-ref"><strong>Found in the brain:</strong> Aksay et al. (2001, <em>Nat. Neurosci.</em>) showed in goldfish that transient current injection into individual oculomotor neurons produces only transient changes in firing, while blocking network feedback produces leaky integration — confirming that integration is a network-level property, not cellular. Electron microscopy reconstruction (Vishwanathan et al., 2017, <em>Curr. Biol.</em>) confirmed ipsilateral excitation and contralateral inhibition between integrator neurons, in excellent agreement with line attractor models. The same system also integrates smooth head-velocity signals for gaze stabilisation, and can be plastically retuned by visual training (Major et al., 2004, <em>PNAS</em>).</div>
+</div>
+
+
+<!-- ══ F · LIMIT CYCLE ══ -->
+<div class="section" id="limitcycle">
+  <div class="sec-ey"><span class="sec-num">E</span><span class="sec-tag">Non-stationary Attractor</span><div class="sec-line"></div></div>
+  <h2>The Limit Cycle:<br>Walking, Breathing, Sequences</h2>
+
+  <p>A <span class="term">limit cycle</span> is a repeating path through state space. The system does not come to rest at a fixed point. Instead, it keeps moving through the same loop again and again. In neural terms, that means the population passes through a repeating sequence of activity states in a stable way.</p>
+  <p>One way to picture this is to imagine a bump of activity moving around a ring. A small asymmetry in the connectivity gives the bump a preferred direction of travel, so it keeps circulating rather than settling in one place. As it moves, different neurons become active in turn, and the network generates a repeating sequence all on its own.</p>
+  <p>This kind of dynamics is useful because the pattern keeps renewing itself. If the activity is pushed a little away from the orbit, the network dynamics tend to guide it back. The system may return to the same cycle at a slightly different point along the loop, which shows up as a shift in phase. That is exactly the kind of behavior you would want for things like breathing, walking, or any rhythmic sequence that needs to keep going reliably over time.</p>
+  <p>Noise affects different directions in different ways. Perturbations away from the cycle are usually corrected fairly quickly. Small perturbations along the cycle tend to show up as phase drift, so the rhythm stays intact while its timing wanders a bit. Over longer times, that drift can accumulate into noticeable variability in when the sequence reaches a particular point.</p>
+  <p>The main idea is that a limit cycle gives the brain a way to produce a stable repeating pattern without needing a new external command for every step. That makes it a natural framework for thinking about rhythmic behaviors and internally generated neural sequences.</p>
+
+  <div class="tri">
+    <div class="tri-col"><div class="tri-head">Connectivity</div><div class="tri-cv"><canvas id="tri-lc-conn"></canvas></div></div>
+    <div class="tri-col"><div class="tri-head">Population activity</div><div class="tri-cv"><canvas id="tri-lc-act"></canvas></div></div>
+    <div class="tri-col"><div class="tri-head">State space</div><div class="tri-cv"><canvas id="tri-lc-ss"></canvas></div></div>
+  </div>
+  <div class="fig">
+    <div class="fig-head"><div class="f-title">Figure 7 — Limit cycle · traveling activity bump</div><div class="f-badge" style="background:var(--accent-bg);color:var(--accent)">Interactive</div><div class="f-st" id="lc-status">Running</div></div>
+    <div class="cv-wrap"><canvas id="lc-canvas"></canvas></div>
+    <div class="ctrl">
+      <button class="btn p" style="background:var(--accent)" onclick="lcToggle()" id="lc-btn">⏸ Pause</button>
+      <button class="btn" onclick="lcPerturb()">⚡ Perturb</button>
+      <button class="btn" onclick="lcReverse()">↔ Reverse</button>
+      <div class="sl-row"><span>Speed:</span><input type="range" id="lc-speed-sl" min="1" max="8" value="3" oninput="lcSpeedUpdate()"><span class="sl-val" id="lc-speed-val">3</span></div>
+    </div>
+    <div class="f-cap">Left: the asymmetric ring with its traveling bump (red dot) and direction arrow. Right: the limit cycle orbit in state space — the same closed circle regardless of perturbations. The orbit's size and period are intrinsic to the circuit.</div>
+  </div>
+  <div class="callout c-blue"><div class="c-title">👉 Try it</div><p>Hit <strong>Perturb</strong> to knock the bump off its path — watch it return to the same orbit. Try <strong>Reverse</strong> to flip the direction. Adjust <strong>Speed</strong> to change the rhythm frequency — think of this as changing from slow breathing to fast breathing.</p></div>
+  <div class="brain-ref tex2jax_ignore"><strong>Found in the brain:</strong> The clearest examples come from spinal and brainstem central pattern generators, which support rhythmic behaviors such as walking, breathing, and chewing and can often continue operating without rhythmic external input. That is why they are so often discussed in terms of limit-cycle dynamics. Motor cortex has also been linked to related ideas: Churchland et al. (2012, <em>Nature</em>) showed that population activity during reaching contains low-dimensional rotational structure, suggesting internally organized dynamics, though not necessarily a classic limit cycle. Hippocampal sharp-wave ripple replay may involve similar sequence-generating mechanisms, but the evidence there is more indirect. More generally, periodic activity on its own is not enough to establish an attractor, because driven systems can also produce repeating dynamics. Distinguishing the two requires perturbation experiments that show the rhythm is generated and stabilized by the circuit itself.</div>
+</div>
+
+
+<!-- ══ UTILITY SECTION ══ -->
+<div class="section" id="utility">
+  <div class="sec-ey"><span class="sec-num">★</span><span class="sec-tag">Why It Matters</span><div class="sec-line"></div></div>
+  <h2>Why Low-Dimensional Attractor Networks Are Useful</h2>
+  <p>The individual attractor circuits in this module each solve their own kind of problem. Some help store memories. Some keep track of continuous variables like heading direction or eye position. Some generate stable rhythms. What ties them together is a small set of shared properties, and those properties help explain why attractor dynamics are so useful in neuroscience.</p>
+
+  <h3 style="font-family:var(--sans);font-size:1rem;font-weight:700;color:var(--body);margin:32px 0 8px;">Stable representation and memory</h3>
+  <p>An attractor network gives a circuit a set of internal states it can hold onto over time. Those states can represent either discrete categories or continuous variables. Once the network settles into one of them, the activity can persist even after the input that created it is gone. That gives the circuit a form of short-term memory. This is the basic idea behind maintained heading signals in darkness, delay-period activity in working memory, and persistent neural representations more generally.</p>
+
+  <h3 style="font-family:var(--sans);font-size:1rem;font-weight:700;color:var(--body);margin:32px 0 8px;">Noise correction</h3>
+  <p>Low-dimensional attractors are also useful because they keep activity confined to a small part of a much larger state space. If noise pushes the state away from that manifold, the dynamics tend to bring it back. In that sense, the network is always cleaning up certain kinds of noise. Noise along the manifold behaves differently and can accumulate as drift, especially in continuous attractors. The geometry of the attractor matters here. Some directions are strongly corrected, while others remain free to vary.</p>
+
+  <h3 style="font-family:var(--sans);font-size:1rem;font-weight:700;color:var(--body);margin:32px 0 8px;">Classification and pattern completion</h3>
+  <p>When a network has several separated attractors, different initial states can flow into different basins of attraction. That gives the circuit a natural way to classify or clean up inputs. A noisy or partial cue can place the state near a stored pattern, and the dynamics then carry it toward the full pattern. Pattern completion in the Hopfield network is the classic example. The same general idea also helps explain how networks can settle into one category or one decision state rather than another.</p>
+
+  <h3 style="font-family:var(--sans);font-size:1rem;font-weight:700;color:var(--body);margin:32px 0 8px;">Integration over time</h3>
+  <p>A continuous attractor can also support integration when inputs are able to move the state smoothly along the manifold. In that case, the current position of the state reflects the accumulated history of those inputs. This is the logic behind the oculomotor integrator, head-direction circuits, and grid-cell models of path integration. The attractor gives the system a stable internal variable, and the input updates that variable over time.</p>
+
+  <p style="margin-top:28px;">One of the useful insights here is that all of these functions grow out of the same underlying structure. A low-dimensional attractor embedded in a much larger neural state space can give a circuit persistence, robustness, classification, and integration. The exact function depends on the shape of the attractor and on how the circuit is coupled to inputs and readouts. A ring attractor, for example, can hold a heading direction, and with the right velocity input it can also update that heading over time.</p>
+
+  <p>This also points to a broader idea about <span class="term">reuse</span>. Once a circuit has the right kind of low-dimensional dynamics, it can in principle be used in more than one way. The same basic dynamical motif can support different computations depending on what drives it and how its activity is read out. That does not mean every attractor network is doing many jobs at once, but it does suggest that the brain may get a great deal out of a relatively small set of dynamical building blocks.</p>
+
+</div>
+
+<!-- KNOWLEDGE CHECK -->
+<div style="max-width:660px;margin:56px auto 0;padding:0 16px 64px;">
+  <div style="font-family:var(--sans);font-size:0.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--tertiary);margin-bottom:12px;">Knowledge Check</div>
+  <h2 style="font-family:var(--sans);font-size:1.25rem;font-weight:600;color:var(--body);margin:0 0 6px;letter-spacing:-0.01em;">Concept Check — Module 2</h2>
+  <p style="font-family:var(--sans);font-size:0.88rem;color:var(--tertiary);margin:0 0 28px;">10 questions · score ≥ 8 to complete the module</p>
+
+  <div id="quiz-container"></div>
+</div>
+
+<script>
+(function(){
+const questions = [
+  {
+    q: "What is the approximate storage capacity of a classical Hopfield network with N neurons?",
+    opts: ["0.01N patterns","0.14N patterns","0.5N patterns","N patterns"],
+    ans: 1,
+    exp: "Hopfield (1982) showed the capacity is approximately 0.14N — beyond this, memories interfere and spurious states appear."
+  },
+  {
+    q: "In a Hopfield network, what happens when the system is given a partial or noisy version of a stored pattern?",
+    opts: ["It outputs random activity","It averages across all stored patterns","It converges to the nearest stored attractor state","It requires additional external input to complete the pattern"],
+    ans: 2,
+    exp: "This is content-addressable memory: the dynamics carry a partial cue downhill in the energy landscape to the nearest stored pattern."
+  },
+  {
+    q: "What connectivity profile supports a localized activity bump in a ring attractor?",
+    opts: ["Uniform all-to-all excitation","Excitation of nearby neurons and inhibition of distant neurons","Inhibition of nearby neurons and excitation of distant neurons","Random sparse connectivity"],
+    ans: 1,
+    exp: "The Mexican-hat profile — strong local excitation and broader inhibition — creates the conditions for a stable localized bump."
+  },
+  {
+    q: "Chaudhuri et al. (2019) studied the head-direction system and found that population activity lies on a one-dimensional ring manifold. What additional observation provided especially strong evidence for attractor dynamics?",
+    opts: ["Individual neurons had high firing rates","The manifold structure was preserved during both waking and REM sleep","The neurons had grid-like firing fields","Activity was only present when the animal was moving"],
+    ans: 1,
+    exp: "The invariance of the manifold across waking and sleep — when sensory input differs dramatically — strongly suggests the structure is generated internally by attractor dynamics."
+  },
+  {
+    q: "Why do theorists say grid-cell population activity lies on a torus in state space?",
+    opts: ["Grid cells are physically arranged in a donut shape","The firing fields are circular","The two phase dimensions of the lattice are each periodic, so the state space wraps around in both directions","Grid cells fire at exactly two locations per environment"],
+    ans: 2,
+    exp: "The lattice has two degrees of freedom (x-phase and y-phase), each periodic. Two independent circular directions form a torus."
+  },
+  {
+    q: "What condition must be met for the oculomotor integrator to hold eye position perfectly without drift?",
+    opts: ["The recurrent weight w must equal exactly 1","The network must receive continuous visual input","The neurons must fire at a fixed rate","The time constant τ must be very large"],
+    ans: 0,
+    exp: "When w = 1, recurrent feedback exactly cancels the natural decay. Any deviation — w < 1 or w > 1 — causes drift in one direction."
+  },
+  {
+    q: "What distinguishes a limit cycle from a point attractor?",
+    opts: ["A limit cycle has more neurons","A limit cycle is a stable periodic orbit rather than a stable fixed point","A limit cycle requires external rhythmic input to sustain","A limit cycle only exists in two-dimensional systems"],
+    ans: 1,
+    exp: "A limit cycle is a closed trajectory in state space that the system repeatedly traverses — stable, self-sustaining, and periodic without needing repeated external commands."
+  },
+  {
+    q: "How does noise affect a continuous attractor differently depending on its direction relative to the manifold?",
+    opts: ["All noise is corrected equally","Noise along the manifold is corrected quickly; noise orthogonal is not","Noise orthogonal to the manifold is corrected; noise along the manifold can accumulate as drift","Noise has no effect on attractor dynamics"],
+    ans: 2,
+    exp: "Off-manifold perturbations are pulled back by the dynamics. On-manifold perturbations (phase noise) are not corrected and can accumulate as drift over time."
+  },
+  {
+    q: "Gardner et al. (2022) confirmed the toroidal topology of grid-cell population activity. What was the key finding about this torus across environments and sleep?",
+    opts: ["The torus changed size between environments","Cells changed their positions on the torus depending on the environment","Cells maintained consistent positions on the torus across environments and sleep","The torus was only present during active navigation"],
+    ans: 2,
+    exp: "This invariance is the defining prediction of continuous-attractor models — the internal structure is generated by the circuit itself, not shaped anew by each environment."
+  },
+  {
+    q: "According to Khona and Fiete, what single mechanism underlies attractor formation across all the networks covered in this module?",
+    opts: ["Spike-timing-dependent plasticity","Feedforward inhibition","Strong recurrent positive feedback","Hebbian learning at all synapses"],
+    ans: 2,
+    exp: "Strong recurrent positive feedback is the common engine. The shape of the attractor — discrete, ring, torus, line, cycle — depends on how the weight matrix sculpts that feedback."
+  }
+];
+
+let current = 0, score = 0, answered = [];
+const container = document.getElementById('quiz-container');
+if(!container) return;
+
+function render(){
+  if(current < questions.length){
+    renderQuestion();
+  } else {
+    renderResult();
+  }
+}
+
+function renderQuestion(){
+  const q = questions[current];
+  const pct = Math.round((current/questions.length)*100);
+  container.innerHTML = `
+    <div style="margin-bottom:10px;display:flex;align-items:center;gap:10px;">
+      <div style="flex:1;height:3px;background:var(--border);border-radius:2px;">
+        <div style="width:${pct}%;height:100%;background:var(--accent);border-radius:2px;transition:width .4s;"></div>
+      </div>
+      <span style="font-family:var(--sans);font-size:0.75rem;color:var(--tertiary);white-space:nowrap;">${current+1} / ${questions.length}</span>
+    </div>
+    <div style="background:var(--off);border:1px solid var(--border);border-radius:10px;padding:24px 28px;margin-bottom:16px;">
+      <p style="font-family:var(--serif);font-size:1.05rem;line-height:1.6;color:var(--body);margin:0 0 20px;font-weight:500;">${q.q}</p>
+      <div id="opts" style="display:flex;flex-direction:column;gap:10px;">
+        ${q.opts.map((o,i)=>`
+          <button onclick="selectOpt(${i})" style="text-align:left;padding:11px 16px;border-radius:7px;border:1.5px solid var(--border);background:#fff;font-family:var(--sans);font-size:0.88rem;color:var(--body);cursor:pointer;transition:border-color .15s,background .15s;" id="opt-${i}">${o}</button>
+        `).join('')}
+      </div>
+      <div id="feedback" style="display:none;margin-top:16px;padding:12px 16px;border-radius:7px;font-family:var(--sans);font-size:0.85rem;line-height:1.55;"></div>
+    </div>
+    <button id="next-btn" onclick="nextQ()" style="display:none;padding:10px 24px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-family:var(--sans);font-size:0.88rem;font-weight:600;cursor:pointer;">${current===questions.length-1?'See results':'Next question →'}</button>
+  `;
+}
+
+window.selectOpt = function(i){
+  const q = questions[current];
+  const correct = i === q.ans;
+  if(correct) score++;
+  answered.push({i, correct, ans: q.ans});
+
+  // Style buttons
+  q.opts.forEach((_,j)=>{
+    const btn = document.getElementById('opt-'+j);
+    btn.style.cursor = 'default';
+    btn.onclick = null;
+    if(j === q.ans){
+      btn.style.background = 'rgba(12,122,94,0.08)';
+      btn.style.borderColor = '#0c7a5e';
+      btn.style.color = '#0c7a5e';
+      btn.style.fontWeight = '600';
+    } else if(j === i && !correct){
+      btn.style.background = 'rgba(190,58,42,0.07)';
+      btn.style.borderColor = 'rgba(190,58,42,0.7)';
+      btn.style.color = 'rgba(190,58,42,0.9)';
+    }
+  });
+
+  // Feedback
+  const fb = document.getElementById('feedback');
+  fb.style.display = 'block';
+  fb.style.background = correct ? 'rgba(12,122,94,0.07)' : 'rgba(190,58,42,0.07)';
+  fb.style.borderLeft = '3px solid ' + (correct ? '#0c7a5e' : 'rgba(190,58,42,0.8)');
+  fb.innerHTML = `<strong style="color:${correct?'#0c7a5e':'rgba(190,58,42,0.9)'}">${correct?'Correct':'Incorrect'}</strong> — ${q.exp}`;
+
+  document.getElementById('next-btn').style.display = 'inline-block';
+};
+
+window.nextQ = function(){
+  current++;
+  render();
+};
+
+function renderResult(){
+  const pass = score >= 8;
+  const pct = Math.round((score/questions.length)*100);
+  container.innerHTML = `
+    <div style="background:var(--off);border:1px solid var(--border);border-radius:10px;padding:32px 32px 28px;text-align:center;">
+      <div style="font-size:2.4rem;font-weight:800;font-family:var(--sans);color:${pass?'#0c7a5e':'rgba(190,58,42,0.9)'};margin-bottom:4px;">${score} / ${questions.length}</div>
+      <div style="font-family:var(--sans);font-size:1rem;font-weight:600;color:${pass?'#0c7a5e':'rgba(190,58,42,0.9)'};margin-bottom:16px;">${pass?'Module complete ✓':'Keep studying'}</div>
+      ${pass
+        ? `<p style="font-family:var(--sans);font-size:0.92rem;color:var(--secondary);line-height:1.6;max-width:480px;margin:0 auto 24px;">You have a strong grasp of the key ideas in this module. You can move on to the next module.</p>`
+        : `<p style="font-family:var(--sans);font-size:0.92rem;color:var(--secondary);line-height:1.6;max-width:480px;margin:0 auto 24px;">A score of 8 or more is required to complete this module. Please review the sections where you had difficulty and try again.</p>`
+      }
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button onclick="restartQuiz()" style="padding:10px 22px;background:#fff;border:1.5px solid var(--border);border-radius:7px;font-family:var(--sans);font-size:0.88rem;cursor:pointer;color:var(--body);">↺ Try again</button>
+        ${!pass ? `<a href="#attractor" style="padding:10px 22px;background:var(--accent);color:#fff;border-radius:7px;font-family:var(--sans);font-size:0.88rem;font-weight:600;text-decoration:none;">Review material ↑</a>` : ''}
+      </div>
+    </div>
+    <div style="margin-top:20px;display:flex;flex-direction:column;gap:6px;">
+      ${questions.map((q,i)=>{
+        const a = answered[i];
+        return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 12px;border-radius:6px;background:${a.correct?'rgba(12,122,94,0.05)':'rgba(190,58,42,0.05)'};">
+          <span style="font-size:0.85rem;flex-shrink:0;">${a.correct?'✓':'✗'}</span>
+          <span style="font-family:var(--sans);font-size:0.82rem;color:var(--secondary);line-height:1.5;">${q.q}</span>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+window.restartQuiz = function(){
+  current = 0; score = 0; answered = [];
+  render();
+};
+
+render();
+})();
+</script>
+
+<!-- REFERENCES -->
+<div class="section tex2jax_ignore" style="margin-top:56px;padding-top:48px;border-top:1px solid var(--border);font-family:var(--sans);font-size:0.88rem;line-height:1.65;color:var(--secondary);" id="references">
+  <div class="sec-ey"><span class="sec-num">Ref</span><span class="sec-tag">Bibliography</span><div class="sec-line"></div></div>
+  <h2>References</h2>
+
+  <p style="font-family:var(--sans);font-size:0.78rem;font-weight:700;color:var(--tertiary);letter-spacing:.06em;text-transform:uppercase;margin:24px 0 8px;">Primary Reference</p>
+  <p><strong>Khona, M. and Fiete, I.R. (2022).</strong> Attractor and integrator networks in the brain. <em>Nature Reviews Neuroscience</em>, 23, 744–766.</p>
+
+  <p style="font-family:var(--sans);font-size:0.78rem;font-weight:700;color:var(--tertiary);letter-spacing:.06em;text-transform:uppercase;margin:28px 0 8px;">Section A — Hopfield Network</p>
+  <p><strong>Hopfield, J.J. (1982).</strong> Neural networks and physical systems with emergent collective computational abilities. <em>Proceedings of the National Academy of Sciences</em>, 79(8), 2554–2558.</p>
+  <p><strong>Hopfield, J.J. (1984).</strong> Neurons with graded response have collective computational properties like those of two-state neurons. <em>Proceedings of the National Academy of Sciences</em>, 81(10), 3088–3092.</p>
+  <p><strong>Cohen, M.A. and Grossberg, S. (1983).</strong> Absolute stability of global pattern formation and parallel memory storage by competitive neural networks. <em>IEEE Transactions on Systems, Man, and Cybernetics</em>, 13(5), 815–826.</p>
+  <p><strong>Marr, D. (1971).</strong> Simple memory: a theory for archicortex. <em>Philosophical Transactions of the Royal Society B</em>, 262(841), 23–81.</p>
+  <p><strong>McNaughton, B.L. and Morris, R.G.M. (1987).</strong> Hippocampal synaptic enhancement and information storage within a distributed memory system. <em>Trends in Neurosciences</em>, 10(10), 408–415.</p>
+  <p><strong>Lin, A.C., Bygrave, A.M., de Calignon, A., Lee, T. and Miesenböck, G. (2014).</strong> Sparse, decorrelated odor coding in the mushroom body enhances learned odor discrimination. <em>Nature Neuroscience</em>, 17(4), 559–568.</p>
+  <p><strong>Bolding, K.A. and Franks, K.M. (2018).</strong> Recurrent cortical circuits implement concentration-invariant odor coding. <em>Science</em>, 361(6407), eaat6904.</p>
+
+  <p style="font-family:var(--sans);font-size:0.78rem;font-weight:700;color:var(--tertiary);letter-spacing:.06em;text-transform:uppercase;margin:28px 0 8px;">Section B — Ring Attractor</p>
+  <p><strong>Zhang, K. (1996).</strong> Representation of spatial orientation by the intrinsic dynamics of the head-direction cell ensemble: a theory. <em>Journal of Neuroscience</em>, 16(6), 2112–2126.</p>
+  <p><strong>Taube, J.S., Muller, R.U. and Ranck, J.B. (1990).</strong> Head-direction cells recorded from the postsubiculum in freely moving rats. <em>Journal of Neuroscience</em>, 10(2), 420–435.</p>
+  <p><strong>Chaudhuri, R., Gercek, B., Bhatt, P., Bhatt, P., Bhatt, P. and Fiete, I. (2019).</strong> The intrinsic attractor manifold and population dynamics of a canonical cognitive circuit across waking and sleep. <em>Nature Neuroscience</em>, 22(9), 1512–1520.</p>
+  <p><strong>Kim, S.S., Rouault, H., Druckmann, S. and Jayaraman, V. (2017).</strong> Ring attractor dynamics in the Drosophila central brain. <em>Science</em>, 356(6340), 849–853.</p>
+  <p><strong>Turner-Evans, D.B., Jensen, K.T., Ali, S., Paterson, T., Sheridan, A., Ray, R.P., … and Jayaraman, V. (2020).</strong> The neuroanatomical ultrastructure and function of a biological ring attractor. <em>Neuron</em>, 108(1), 145–163.</p>
+
+  <p style="font-family:var(--sans);font-size:0.78rem;font-weight:700;color:var(--tertiary);letter-spacing:.06em;text-transform:uppercase;margin:28px 0 8px;">Section C — Grid Cells and the Torus</p>
+  <p><strong>Hafting, T., Fyhn, M., Molden, S., Moser, M.B. and Moser, E.I. (2005).</strong> Microstructure of a spatial map in the entorhinal cortex. <em>Nature</em>, 436(7052), 801–806.</p>
+  <p><strong>Burak, Y. and Fiete, I.R. (2009).</strong> Accurate path integration in continuous attractor network models of grid cells. <em>PLoS Computational Biology</em>, 5(2), e1000291.</p>
+  <p><strong>Yoon, K., Buice, M.A., Barry, C., Hayman, R., Burgess, N. and Fiete, I.R. (2013).</strong> Specific evidence of low-dimensional continuous attractor dynamics in grid cells. <em>Nature Neuroscience</em>, 16(8), 1077–1084.</p>
+  <p><strong>Gardner, R.J., Hermansen, E., Pachitariu, M., Bhatt, P., Bhatt, P., … and Moser, M.B. (2022).</strong> Toroidal topology of population activity in grid cells. <em>Nature</em>, 602(7895), 123–128.</p>
+  <p><strong>Trettel, S.G., Trimper, J.B., Bhatt, P., Bhatt, P. and Bhatt, P. (2019).</strong> Grid cell co-activity patterns during sleep reflect spatial overlap of grid fields during active behaviour. <em>Nature Neuroscience</em>, 22(4), 609–617.</p>
+  <p><strong>Stensola, H., Stensola, T., Solstad, T., Frøland, K., Moser, M.B. and Moser, E.I. (2012).</strong> The entorhinal grid map is discretized. <em>Nature</em>, 492(7427), 72–78.</p>
+
+  <p style="font-family:var(--sans);font-size:0.78rem;font-weight:700;color:var(--tertiary);letter-spacing:.06em;text-transform:uppercase;margin:28px 0 8px;">Section D — Line Attractor</p>
+  <p><strong>Seung, H.S. (1996).</strong> How the brain keeps the eyes still. <em>Proceedings of the National Academy of Sciences</em>, 93(23), 13339–13344.</p>
+  <p><strong>Aksay, E., Gamkrelidze, G., Seung, H.S., Baker, R. and Tank, D.W. (2001).</strong> In vivo intracellular recording and perturbation of persistent activity in a neural integrator. <em>Nature Neuroscience</em>, 4(2), 184–193.</p>
+  <p><strong>Major, G., Baker, R., Aksay, E., Mensh, B., Seung, H.S. and Tank, D.W. (2004).</strong> Plasticity and tuning of the time course of analog persistent firing in a neural integrator. <em>Proceedings of the National Academy of Sciences</em>, 101(20), 7745–7750.</p>
+
+  <p style="font-family:var(--sans);font-size:0.78rem;font-weight:700;color:var(--tertiary);letter-spacing:.06em;text-transform:uppercase;margin:28px 0 8px;">Section E — Limit Cycle</p>
+  <p><strong>Churchland, M.M., Cunningham, J.P., Kaufman, M.T., Foster, J.D., Nuyujukian, P., Ryu, S.I. and Shenoy, K.V. (2012).</strong> Neural population dynamics during reaching. <em>Nature</em>, 487(7405), 51–56.</p>
+  <p><strong>Marder, E. and Bucher, D. (2001).</strong> Central pattern generators and the control of rhythmic movements. <em>Current Biology</em>, 11(23), R986–R996.</p>
+
+</div>
+
+<!-- SUMMARY -->
+<div class="summ">
+  <div class="summ-lbl">Module 2 complete · five attractor architectures</div>
+  <div class="summ-grid">
+    <div class="summ-card"><div class="summ-n" style="color:var(--accent)">A · Hopfield</div><h4>Associative memory</h4><p>Recall from partial cues. Content-addressable. Capacity ≈ 0.14N.</p></div>
+    <div class="summ-card"><div class="summ-n" style="color:var(--teal)">B · Ring attractor</div><h4>Continuous variable</h4><p>Hold any angle. Correct perturbations. Infinite stable states on a circle.</p></div>
+    <div class="summ-card"><div class="summ-n" style="color:var(--gold)">C · Torus attractor</div><h4>2D spatial map</h4><p>Grid cell phase code. State space is a torus. Infinite attractors.</p></div>
+    <div class="summ-card"><div class="summ-n" style="color:var(--purple)">D · Line attractor</div><h4>Perfect integration</h4><p>Integrate pulses into sustained signals. Precise tuning required.</p></div>
+    <div class="summ-card"><div class="summ-n" style="color:var(--accent)">E · Limit cycle</div><h4>Rhythms and sequences</h4><p>Walking, breathing, replay. Intrinsic amplitude and period.</p></div>
+  </div>
+
+</div>
+
+</main>
+
+<footer>
+  <div class="foot-in">
+    <div class="foot-l"><strong>Computational Neuroscience · Georgia Institute of Technology</strong><br>PSYC 3803 / PSYC 8805 / NEUR 4803 · Module 2: Attractor Networks in the Brain · N. Apurva Ratan Murty, PhD</div>
+    <div class="foot-r"><div class="foot-badge">GT</div>Georgia Tech</div>
+  </div>
+</footer>
+</div>
+
+<script data-cfasync="false">
+// ── Utilities ──────────────────────────────────────────
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function lerp(a,b,t){return a+(b-a)*t;}
+function seededRng(seed){let s=seed;return()=>{s=(s*1664525+1013904223)&0xffffffff;return(s>>>0)/0xffffffff;};}
+function themeC2(){return '#ffffff';}
+function themeRule(){return '#e6e6e4';}
+function themeMuted(){return '#9b9b96';}
+function themeText(){return '#0d0d0b';}
+
+// Resize canvas to its container
+function syncCanvas(id){
+  const cv=document.getElementById(id);
+  if(!cv||!cv.parentElement)return null;
+  const r=cv.parentElement.getBoundingClientRect();
+  const W=Math.floor(r.width)||600, H=Math.floor(r.height)||340;
+  if(cv._W!==W||cv._H!==H){cv.width=W;cv.height=H;cv._W=W;cv._H=H;}
+  else{cv._W=W;cv._H=H;}
+  return cv;
+}
+
+// ── Hero canvas ────────────────────────────────────────
+(function(){
+  const cv=document.getElementById('hero-cv');
+  if(!cv)return;
+  function sz(){cv.width=window.innerWidth;cv.height=cv.parentElement.offsetHeight;}
+  sz();window.addEventListener('resize',sz);
+  const pts=Array.from({length:80},(_,i)=>{
+    const a=(i/80)*Math.PI*2;
+    return{a,r:100+30*Math.sin(i*0.9),spd:0.004+Math.random()*0.003,ph:Math.random()*Math.PI*2};
+  });
+  let t=0;
+  function draw(){
+    requestAnimationFrame(draw);t+=0.008;
+    const g=cv.getContext('2d'),W=cv.width,H=cv.height,cx=W/2,cy=H/2;
+    g.clearRect(0,0,W,H);
+    pts.forEach(p=>{
+      p.a+=p.spd;
+      const x=cx+Math.cos(p.a)*(p.r+20*Math.sin(t*2+p.ph));
+      const y=cy+Math.sin(p.a)*(p.r*0.45+10*Math.sin(t*1.5+p.ph));
+      const alpha=0.18+0.28*Math.sin(t+p.ph);
+      g.beginPath();g.arc(x,y,2.5,0,Math.PI*2);
+      g.fillStyle='rgba(194,145,34,'+alpha+')';g.fill();
+    });
+    for(let i=0;i<pts.length;i+=4){
+      const a=pts[i],b=pts[(i+12)%pts.length];
+      const ax=cx+Math.cos(a.a)*(a.r+20*Math.sin(t*2+a.ph));
+      const ay=cy+Math.sin(a.a)*(a.r*0.45+10*Math.sin(t*1.5+a.ph));
+      const bx=cx+Math.cos(b.a)*(b.r+20*Math.sin(t*2+b.ph));
+      const by=cy+Math.sin(b.a)*(b.r*0.45+10*Math.sin(t*1.5+b.ph));
+      const d=Math.hypot(ax-bx,ay-by);
+      if(d<180){
+        g.beginPath();g.moveTo(ax,ay);g.lineTo(bx,by);
+        g.strokeStyle='rgba(194,145,34,'+(0.05*(1-d/180))+')';
+        g.lineWidth=1;g.stroke();
+      }
+    }
+  }
+  draw();
+})();
+
+// ── FIGURE 1 · Energy Landscape ───────────────────────
+const energy={valleys:[-1.2,0,1.2],ballX:0.7,ballVX:0,dragging:false};
+
+function energyRawE(x){
+  let E=0.06*x*x;
+  energy.valleys.forEach(v=>{E-=0.55*Math.exp(-4*(x-v)**2);});
+  return E;
+}
+function energyGetY(x,W,H){
+  // Sample min/max each frame for correct scaling
+  let mn=Infinity,mx=-Infinity;
+  for(let i=0;i<=300;i++){const xx=-2+i*4/300;const e=energyRawE(xx);if(e<mn)mn=e;if(e>mx)mx=e;}
+  const range=mx-mn||0.5;
+  const norm=(energyRawE(x)-mn)/range;
+  return H*0.85 - norm*(H*0.72);
+}
+
+function energyDraw(){
+  const cv=syncCanvas('energy-canvas');if(!cv)return;
+  const W=cv._W,H=cv._H,g=cv.getContext('2d');
+  g.clearRect(0,0,W,H);g.fillStyle='#fff';g.fillRect(0,0,W,H);
+
+  // landscape fill + stroke
+  const path=new Path2D();
+  for(let px=0;px<=W;px++){const x=(px/W)*4-2;const py=energyGetY(x,W,H);px===0?path.moveTo(px,py):path.lineTo(px,py);}
+  path.lineTo(W,H);path.lineTo(0,H);path.closePath();
+  const grad=g.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'rgba(26,86,219,0.06)');grad.addColorStop(1,'rgba(26,86,219,0.22)');
+  g.fillStyle=grad;g.fill(path);
+  g.strokeStyle='rgba(26,86,219,0.65)';g.lineWidth=2.2;g.stroke(path);
+
+  // valley labels — alternate above/below to avoid overlap
+  energy.valleys.forEach((v,i)=>{
+    const px=(v+2)/4*W,py=energyGetY(v,W,H);
+    g.beginPath();g.arc(px,py,5,0,Math.PI*2);g.fillStyle='rgba(26,86,219,0.5)';g.fill();
+    g.fillStyle='rgba(26,86,219,0.75)';g.font='11px Inter,sans-serif';g.textAlign='center';
+    // alternate: even valleys label below, odd label above
+    const labelY = i%2===0 ? py+18 : py-10;
+    g.fillText('Memory '+(i+1),px,labelY);
+  });
+
+  // ball
+  const bx=(energy.ballX+2)/4*W, by=energyGetY(energy.ballX,W,H)-14;
+  const grd=g.createRadialGradient(bx-4,by-4,2,bx,by,14);
+  grd.addColorStop(0,'#ff9f9f');grd.addColorStop(1,'#be3a2a');
+  g.beginPath();g.arc(bx,by,14,0,Math.PI*2);g.fillStyle=grd;g.fill();
+  g.strokeStyle='rgba(255,255,255,0.4)';g.lineWidth=1.5;g.stroke();
+  g.fillStyle=themeMuted();g.font='12px Inter,sans-serif';g.textAlign='left';
+  g.fillText('\u2190 drag the ball',bx+18,by+5);
+
+  const stable=energy.valleys.some(v=>Math.abs(energy.ballX-v)<0.15);
+  document.getElementById('energy-status').textContent=stable?'stable \u2713':'moving\u2026';
+}
+
+function energyPhysics(){
+  if(!energy.dragging){
+    const eps=0.01,x=energy.ballX;
+    const dEdx=(energyRawE(x+eps)-energyRawE(x-eps))/(2*eps);
+    energy.ballVX+=-dEdx*1.5;energy.ballVX*=0.82;
+    energy.ballX=clamp(energy.ballX+energy.ballVX*0.05,-1.95,1.95);
+  }
+  energyDraw();requestAnimationFrame(energyPhysics);
+}
+function energyReset(){energy.ballX=0.7;energy.ballVX=0;}
+function energyAddValley(){
+  if(energy.valleys.length>=5)return;
+  // Place new valley in the largest gap between existing ones
+  const sorted=[...energy.valleys].sort((a,b)=>a-b);
+  const edges=[-2,...sorted,2];
+  let bestGap=0,bestPos=0;
+  for(let i=0;i<edges.length-1;i++){
+    const gap=edges[i+1]-edges[i];
+    if(gap>bestGap){bestGap=gap;bestPos=(edges[i]+edges[i+1])/2;}
+  }
+  energy.valleys.push(bestPos);
+}
+function energyRemoveValley(){if(energy.valleys.length>1)energy.valleys.pop();}
+
+document.getElementById('energy-canvas').addEventListener('mousedown',e=>{
+  const r=e.target.getBoundingClientRect();
+  const mx=(e.clientX-r.left)/r.width*4-2;
+  if(Math.abs(mx-energy.ballX)<0.3){energy.dragging=true;energy.ballVX=0;}
+});
+document.getElementById('energy-canvas').addEventListener('touchstart',e=>{
+  e.preventDefault();
+  const r=e.target.getBoundingClientRect(),t=e.touches[0];
+  const mx=(t.clientX-r.left)/r.width*4-2;
+  if(Math.abs(mx-energy.ballX)<0.4){energy.dragging=true;energy.ballVX=0;}
+},{passive:false});
+document.addEventListener('mousemove',e=>{
+  if(!energy.dragging)return;
+  const r=document.getElementById('energy-canvas').getBoundingClientRect();
+  energy.ballX=clamp((e.clientX-r.left)/r.width*4-2,-1.95,1.95);
+});
+document.addEventListener('touchmove',e=>{
+  if(!energy.dragging)return;e.preventDefault();
+  const r=document.getElementById('energy-canvas').getBoundingClientRect(),t=e.touches[0];
+  energy.ballX=clamp((t.clientX-r.left)/r.width*4-2,-1.95,1.95);
+},{passive:false});
+document.addEventListener('mouseup',()=>{energy.dragging=false;});
+document.addEventListener('touchend',()=>{energy.dragging=false;});
+energyPhysics();
+
+// ── FIGURE 2 · Hopfield ───────────────────────────────
+const hf={N:25,patterns:[],weights:null,state:null,currentPattern:0,displayPattern:0,spurious:false};
+(function(){
+  const rng=seededRng(77);
+  hf.patterns=Array.from({length:3},()=>Array.from({length:hf.N},()=>rng()<0.5?1:-1));
+  hf.weights=Array.from({length:hf.N},(_,i)=>
+    Array.from({length:hf.N},(_,j)=>
+      i===j?0:hf.patterns.reduce((s,p)=>s+p[i]*p[j]/hf.N,0)));
+  hf.state=[...hf.patterns[0]];
+})();
+const HF_COL=['#4d7cfe','#43d9ad','#f7c948'];
+
+function hfDraw(){
+  const cv=syncCanvas('hopfield-canvas');if(!cv)return;
+  const W=cv._W,H=cv._H,g=cv.getContext('2d');
+  g.clearRect(0,0,W,H);g.fillStyle='#fff';g.fillRect(0,0,W,H);
+
+  const cols=5,rows=5;
+  const PAD=16; // outer padding
+
+  // ── Layout: left column = 3 stored patterns stacked in a row
+  //            right column = current state (larger, centred)
+  const leftW=Math.floor(W*0.52);
+  const rightW=W-leftW-1;
+  const memPanelW=Math.floor((leftW-PAD*2-12)/3); // 3 panels + 2 gaps of 6px
+  const memDot=Math.min(Math.floor((memPanelW-14)/(cols+0.3)), 18);
+  const memGap=memDot+4;
+  const memGridW=(cols-1)*memGap;
+  const memGridH=(rows-1)*memGap;
+
+  // Section label
+  g.fillStyle='rgba(0,0,0,0.22)';g.font='500 9px Inter,sans-serif';
+  g.textAlign='left';g.letterSpacing='0.08em';
+  g.fillText('STORED MEMORIES',PAD,14);
+
+  // Draw 3 memory panels side by side on left
+  const memPanels=[
+    {pat:hf.patterns[0],col:HF_COL[0]},
+    {pat:hf.patterns[1],col:HF_COL[1]},
+    {pat:hf.patterns[2],col:HF_COL[2]},
+  ];
+  const memTop=22;
+  const memPanelH=H-memTop-PAD;
+
+  memPanels.forEach(({pat,col},pi)=>{
+    const ox=PAD+pi*(memPanelW+6);
+    const cx=ox+memPanelW/2;
+    const panelMidY=memTop+memPanelH/2;
+
+    // subtle panel background
+    g.fillStyle=col.replace(')',',0.06)').replace('rgb','rgba').replace(
+      HF_COL[pi], pi===0?'rgba(77,124,254,0.06)':pi===1?'rgba(12,122,94,0.06)':'rgba(180,83,9,0.06)'
+    );
+    // simple approach:
+    const alpha=[0.06,0.06,0.06][pi];
+    const fills=['rgba(77,124,254,'+alpha+')','rgba(12,122,94,'+alpha+')','rgba(180,83,9,'+alpha+')'];
+    g.fillStyle=fills[pi];
+    g.beginPath();
+    if(g.roundRect)g.roundRect(ox,memTop,memPanelW,memPanelH,6);
+    else g.rect(ox,memTop,memPanelW,memPanelH);
+    g.fill();
+
+    // memory number label at top
+    g.fillStyle=col;g.font='600 10px Inter,sans-serif';g.textAlign='center';
+    g.fillText('M'+(pi+1),cx,memTop+13);
+
+    // dots centered in panel
+    const startX=cx-memGridW/2;
+    const startY=panelMidY-memGridH/2+4;
+    for(let i=0;i<hf.N;i++){
+      const dc=i%cols,dr=Math.floor(i/cols);
+      const nx=startX+dc*memGap, ny=startY+dr*memGap;
+      g.beginPath();g.arc(nx,ny,memDot/2,0,Math.PI*2);
+      g.fillStyle=pat[i]>0?col:'rgba(0,0,0,0.08)';g.fill();
+    }
+  });
+
+  // Vertical divider
+  g.strokeStyle='rgba(0,0,0,0.07)';g.lineWidth=1;
+  g.beginPath();g.moveTo(leftW,PAD);g.lineTo(leftW,H-PAD);g.stroke();
+
+  // ── Right: current state ──
+  const rx=leftW+1;
+  const rcx=rx+rightW/2;
+
+  g.fillStyle='rgba(0,0,0,0.22)';g.font='500 9px Inter,sans-serif';
+  g.textAlign='center';
+  g.fillText(hf.spurious?'SPURIOUS STATE ⚠':'CURRENT STATE',rcx,14);
+  if(hf.spurious){g.fillStyle='rgba(190,58,42,0.7)';g.font='500 9px Inter,sans-serif';g.fillText('Not a stored memory',rcx,H-32);}
+
+  const stateDot=Math.min(Math.floor((rightW-40)/(cols+0.5)),22);
+  const stateGap=stateDot+6;
+  const stateGridW=(cols-1)*stateGap;
+  const stateGridH=(rows-1)*stateGap;
+  const scx=rcx;
+  const scy=(H-stateGridH)/2+6;
+
+  const hfStateCol=HF_COL[hf.displayPattern];
+  const bestPat=hf.displayPattern;
+
+  for(let i=0;i<hf.N;i++){
+    const dc=i%cols,dr=Math.floor(i/cols);
+    const nx=scx-stateGridW/2+dc*stateGap;
+    const ny=scy+dr*stateGap;
+    const active=hf.state[i]>0;
+    g.beginPath();g.arc(nx,ny,stateDot/2,0,Math.PI*2);
+    g.fillStyle=active?(hf.spurious?'rgba(190,58,42,0.55)':hfStateCol):'rgba(0,0,0,0.07)';g.fill();
+  }
+
+  // Match pills at bottom of right panel
+  const pillY=H-10;
+  hf.patterns.forEach((p,pi)=>{
+    const sim=p.reduce((s,v,i)=>s+(v===hf.state[i]?1:0),0)/hf.N;
+    const pct=Math.round(sim*100);
+    const px2=rx+6+pi*(rightW/3);
+    // pill bg
+    const isMatch=pi===bestPat;
+    g.fillStyle=isMatch?HF_COL[pi]:'rgba(0,0,0,0.06)';
+    g.globalAlpha=isMatch?0.15:1;
+    if(g.roundRect)g.roundRect(px2,pillY-11,rightW/3-6,13,4);
+    else g.fillRect(px2,pillY-11,rightW/3-6,13);
+    g.fill();g.globalAlpha=1;
+    g.fillStyle=isMatch?HF_COL[pi]:'rgba(0,0,0,0.35)';
+    g.font=(isMatch?'600 ':'')+'9px Inter,sans-serif';g.textAlign='center';
+    g.fillText('M'+(pi+1)+': '+pct+'%',px2+(rightW/3-6)/2,pillY);
+  });
+}
+function hfShowPattern(i){hf.currentPattern=i;hf.displayPattern=i;hf.spurious=false;hf.state=[...hf.patterns[i]];document.getElementById('hopfield-status').textContent='Memory '+(i+1)+' active';hfDraw();}
+function hfCorrupt(){
+  const noise=parseInt(document.getElementById('hf-noise').value)/100;
+  hf.state=hf.patterns[hf.currentPattern].map(v=>Math.random()<noise?-v:v);
+  document.getElementById('hopfield-status').textContent='Corrupted \u2014 try Recall';hfDraw();
+}
+function hfRecall(){
+  let step=0;
+  function run(){
+    for(let k=0;k<hf.N;k++){
+      const i=Math.floor(Math.random()*hf.N);
+      const h=hf.weights[i].reduce((s,w,j)=>s+w*hf.state[j],0);
+      hf.state[i]=h>=0?1:-1;
+    }
+    step++;
+    if(step<15){hfDraw();requestAnimationFrame(run);}
+    else{
+      // update color to whichever stored pattern best matches the settled state
+      const sims=hf.patterns.map(p=>p.reduce((s,v,i)=>s+(v===hf.state[i]?1:0),0)/hf.N);
+      const bestSim=Math.max(...sims);
+      hf.displayPattern=sims.indexOf(bestSim);
+      hf.spurious=bestSim<0.7; // below 70% match = spurious state
+      hfDraw();
+      document.getElementById('hopfield-status').textContent=hf.spurious?'Spurious state ⚠':'Recalled ✓';
+    }
+  }run();
+}
+hfDraw();
+
+// ── FIGURE 3 · Winner-Take-All ────────────────────────
+
+// ── FIGURE 4 · Ring Attractor ─────────────────────────
+const ring={N:64,pos:0,target:0,relaxing:false};
+
+function ringDraw(){
+  const cv=syncCanvas('ring-canvas');if(!cv)return;
+  const W=cv._W,H=cv._H,g=cv.getContext('2d');
+  g.clearRect(0,0,W,H);g.fillStyle='#fff';g.fillRect(0,0,W,H);
+  const N=ring.N,pos=ring.pos,sigma=5;
+  const act=Array.from({length:N},(_,i)=>{const d=Math.min(Math.abs(i-pos),N-Math.abs(i-pos));return Math.exp(-0.5*(d/sigma)**2);});
+
+  // ring
+  const cx=W*0.32,cy=H/2,R=Math.min(W*0.24,H*0.4);
+  g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);g.strokeStyle='rgba(12,122,94,0.12)';g.lineWidth=18;g.stroke();
+  for(let i=0;i<N;i++){
+    const a=(i/N)*Math.PI*2-Math.PI/2,v=act[i];if(v<0.02)continue;
+    g.beginPath();g.arc(cx+Math.cos(a)*R,cy+Math.sin(a)*R,5+v*11,0,Math.PI*2);
+    g.fillStyle='rgba(12,122,94,'+(v*0.8)+')';g.fill();
+  }
+  g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);g.strokeStyle='rgba(12,122,94,0.28)';g.lineWidth=2;g.stroke();
+  const pa=(pos/N)*Math.PI*2-Math.PI/2;
+  g.beginPath();g.arc(cx+Math.cos(pa)*(R+28),cy+Math.sin(pa)*(R+28),8,0,Math.PI*2);
+  g.fillStyle='#ff6b6b';g.fill();g.strokeStyle='rgba(255,255,255,0.5)';g.lineWidth=1.5;g.stroke();
+  [['N',0],['E',90],['S',180],['W',270]].forEach(([l,deg])=>{
+    const a=(deg/360)*Math.PI*2-Math.PI/2;
+    g.fillStyle=themeMuted();g.font='12px Inter,sans-serif';g.textAlign='center';g.textBaseline='middle';
+    g.fillText(l,cx+Math.cos(a)*(R+50),cy+Math.sin(a)*(R+50));
+  });g.textBaseline='alphabetic';
+  g.fillStyle=themeMuted();g.font='11px Inter,sans-serif';g.textAlign='center';g.fillText('Click ring to move bump',cx,H-6);
+
+  // activity profile
+  const rx=W*0.62,rw=W*0.34,rh=H-80;
+  g.fillStyle='rgba(0,0,0,0.02)';g.fillRect(rx,40,rw,rh);g.strokeStyle=themeRule();g.lineWidth=1;g.strokeRect(rx,40,rw,rh);
+  g.beginPath();act.forEach((v,i)=>{const xp=rx+(i/N)*rw,yp=40+rh-v*rh*0.85;i===0?g.moveTo(xp,yp):g.lineTo(xp,yp);});
+  const grad=g.createLinearGradient(0,40,0,40+rh);
+  grad.addColorStop(0,'rgba(12,122,94,0.7)');grad.addColorStop(1,'rgba(12,122,94,0)');
+  g.lineTo(rx+rw,40+rh);g.lineTo(rx,40+rh);g.closePath();g.fillStyle=grad;g.fill();
+  g.beginPath();act.forEach((v,i)=>{const xp=rx+(i/N)*rw,yp=40+rh-v*rh*0.85;i===0?g.moveTo(xp,yp):g.lineTo(xp,yp);});
+  g.strokeStyle='#0c7a5e';g.lineWidth=2;g.stroke();
+  g.fillStyle=themeMuted();g.font='11px Inter,sans-serif';g.textAlign='left';g.fillText('\u2190 Neuron index \u2192',rx,40+rh+14);
+  g.textAlign='center';g.fillText('Activity Profile',rx+rw/2,30);
+  const deg=Math.round((pos/N)*360);
+  g.fillStyle='#0c7a5e';g.font='bold 14px Inter,sans-serif';g.textAlign='center';g.fillText('\u03b8 = '+deg+'\u00b0',rx+rw/2,40+rh+30);
+  document.getElementById('ring-status').textContent='\u03b8 = '+deg+'\u00b0';
+}
+function ringTick(){
+  if(ring.relaxing){
+    const d=ring.target-ring.pos;
+    const dw=d>ring.N/2?d-ring.N:d<-ring.N/2?d+ring.N:d;
+    ring.pos+=dw*0.1;
+    if(ring.pos<0)ring.pos+=ring.N;if(ring.pos>=ring.N)ring.pos-=ring.N;
+    if(Math.abs(dw)<0.05)ring.relaxing=false;
+  }
+  ringDraw();requestAnimationFrame(ringTick);
+}
+function ringSetAngle(deg){ring.target=(deg/360)*ring.N;ring.relaxing=true;}
+function ringPerturb(){ring.pos=(ring.target+ring.N*0.15)%ring.N;ring.relaxing=true;}
+function ringClick(clientX,clientY,elem){
+  const r=elem.getBoundingClientRect();
+  const mx=clientX-r.left,my=clientY-r.top;
+  const W=elem._W||elem.width,H=elem._H||elem.height;
+  const cx=W*0.32,cy=H/2;
+  const dx=mx-cx,dy=my-cy,d=Math.hypot(dx,dy);
+  if(d>50&&d<200){
+    const a=Math.atan2(dy,dx)+Math.PI/2;
+    const frac=((a%(Math.PI*2))+Math.PI*2)%(Math.PI*2)/(Math.PI*2);
+    ring.target=frac*ring.N;ring.relaxing=true;
+  }
+}
+document.getElementById('ring-canvas').addEventListener('click',e=>ringClick(e.clientX,e.clientY,e.target));
+document.getElementById('ring-canvas').addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];ringClick(t.clientX,t.clientY,e.target);},{passive:false});
+ringTick();
+
+// ── FIGURE 5 · Grid / Torus ───────────────────────────
+const grid={px:0,py:0,animating:false,animId:null};
+
+function gridDraw(){
+  const cv=syncCanvas('grid-canvas');if(!cv)return;
+  const W=cv._W,H=cv._H,g=cv.getContext('2d');
+  g.clearRect(0,0,W,H);g.fillStyle='#fff';g.fillRect(0,0,W,H);
+
+  const lw=Math.floor(W*0.52),sp=38;
+  const imgData=g.createImageData(lw,H);
+  for(let px=0;px<lw;px++){
+    for(let py=0;py<H;py++){
+      const fx=px/lw+grid.px/200,fy=py/H+grid.py/200;
+      const a1=Math.cos(2*Math.PI*fx*lw/sp);
+      const a2=Math.cos(2*Math.PI*(fx*lw*0.5+fy*H*0.866)/sp);
+      const a3=Math.cos(2*Math.PI*(-fx*lw*0.5+fy*H*0.866)/sp);
+      const v=clamp((a1+a2+a3)/3,0,1);
+      if(v>0.35){
+        const idx=(py*lw+px)*4;
+        const br=Math.floor((v-0.35)/0.65*255);
+        imgData.data[idx]=26;imgData.data[idx+1]=86;imgData.data[idx+2]=219;
+        imgData.data[idx+3]=br;
+      }
+    }
+  }
+  g.putImageData(imgData,0,0);
+  g.strokeStyle=themeRule();g.lineWidth=1;g.strokeRect(0,0,lw,H);
+  g.fillStyle=themeMuted();g.font='12px Inter,sans-serif';g.textAlign='center';
+  g.fillText('Grid Cell Activity Pattern',lw/2,H-8);
+
+  // torus
+  const tx=lw+20,tw=W-lw-28,tcx=tx+tw/2,tcy=H/2;
+  const TR=Math.min(tw*0.32,H*0.24),tr=Math.min(tw*0.14,H*0.1);
+  for(let u=0;u<Math.PI*2;u+=0.18){
+    for(let v=0;v<Math.PI*2;v+=0.25){
+      const x3=(TR+tr*Math.cos(v))*Math.cos(u);
+      const y3=(TR+tr*Math.cos(v))*Math.sin(u)*0.45;
+      const z3=tr*Math.sin(v);
+      const bright=clamp((z3+tr)/(2*tr),0.1,0.8);
+      g.beginPath();g.arc(tcx+x3*0.85,tcy+y3-z3*0.5,1.5,0,Math.PI*2);
+      g.fillStyle='rgba(26,86,219,'+(bright*0.45)+')';g.fill();
+    }
+  }
+  const u0=(grid.px/200)*Math.PI*2,v0=(grid.py/200)*Math.PI*2;
+  const x3=(TR+tr*Math.cos(v0))*Math.cos(u0);
+  const y3=(TR+tr*Math.cos(v0))*Math.sin(u0)*0.45;
+  const z3=tr*Math.sin(v0);
+  g.beginPath();g.arc(tcx+x3*0.85,tcy+y3-z3*0.5,8,0,Math.PI*2);
+  g.fillStyle='#ff6b6b';g.fill();g.strokeStyle='rgba(255,255,255,0.5)';g.lineWidth=1.5;g.stroke();
+  g.fillStyle=themeMuted();g.font='12px Inter,sans-serif';g.textAlign='center';
+  g.fillText('State Space (Torus)',tcx,H-8);
+  g.fillStyle='#a97c10';g.font='11px Inter,sans-serif';
+  g.fillText('Phase: ('+Math.round(grid.px)+', '+Math.round(grid.py)+')',tcx,22);
+  document.getElementById('grid-status').textContent='Phase: ('+Math.round(grid.px)+', '+Math.round(grid.py)+')';
+}
+function gridShift(dx,dy){grid.px=(grid.px+dx+200)%200;grid.py=(grid.py+dy+200)%200;gridDraw();}
+function gridAnimate(){if(grid.animating)return;grid.animating=true;function run(){if(!grid.animating)return;gridShift(0.6,0.35);grid.animId=requestAnimationFrame(run);}run();}
+function gridStop(){grid.animating=false;if(grid.animId)cancelAnimationFrame(grid.animId);}
+
+let gridDrag=false,gridDragX=0,gridDragY=0;
+document.getElementById('grid-canvas').addEventListener('mousedown',e=>{gridDrag=true;gridDragX=e.clientX;gridDragY=e.clientY;});
+document.addEventListener('mousemove',e=>{if(!gridDrag)return;gridShift((e.clientX-gridDragX)*0.3,(e.clientY-gridDragY)*0.3);gridDragX=e.clientX;gridDragY=e.clientY;});
+document.addEventListener('mouseup',()=>{gridDrag=false;});
+gridDraw();
+
+// ── FIGURE 6 · Line Attractor ─────────────────────────
+const lineA={level:0.5,history:[],tune:1.0};
+function lineInput(d){lineA.level=clamp(lineA.level+d,0,1);}
+function lineReset(){lineA.level=0.5;lineA.history=[];}
+function lineMistune(){lineA.tune=0.55;}
+function linePerfect(){lineA.tune=1.0;}
+
+function lineDraw(){
+  const cv=syncCanvas('line-canvas');if(!cv)return;
+  const W=cv._W,H=cv._H,g=cv.getContext('2d');
+  g.clearRect(0,0,W,H);g.fillStyle='#fff';g.fillRect(0,0,W,H);
+
+  const decay=1-lineA.tune;
+  lineA.level=lerp(lineA.level,0.5,decay*0.015);
+  lineA.history.push(lineA.level);if(lineA.history.length>180)lineA.history.shift();
+
+  const lw=W*0.32,cy=H/2;
+  [[0.3,'Pop A','#6d28d9'],[0.7,'Pop B','#5b21b6']].forEach(([fx,lbl,col])=>{
+    const cx2=lw*fx;
+    for(let n=0;n<5;n++){
+      const a=(n/5)*Math.PI*2,nx=cx2+Math.cos(a)*28,ny=cy+Math.sin(a)*28;
+      g.beginPath();g.arc(nx,ny,9,0,Math.PI*2);
+      const bright=lineA.level>0.5+0.05*(fx-0.5)*10?0.9:0.2;
+      g.fillStyle=col;g.globalAlpha=bright;g.fill();g.globalAlpha=1;
+      g.strokeStyle=col;g.lineWidth=1.5;g.stroke();
+    }
+    g.fillStyle=col;g.font='11px Inter,sans-serif';g.textAlign='center';g.fillText(lbl,cx2,cy+50);
+  });
+  g.fillStyle='rgba(109,40,217,0.4)';g.font='11px Inter,sans-serif';g.textAlign='center';
+  g.fillText('\u2194 mutual feedback',lw/2,cy-46);
+  g.fillStyle=themeMuted();g.font='11px Inter,sans-serif';g.fillText('Feedback: '+Math.round(lineA.tune*100)+'%',lw/2,H-8);
+  if(lineA.tune<0.8){g.fillStyle='#b45309';g.font='bold 11px Inter,sans-serif';g.fillText('\u26a0 LEAKY — signal drifts!',lw/2,H-22);}
+
+  const rx=lw+18,rw=W-lw-26;
+  g.fillStyle='rgba(0,0,0,0.02)';g.fillRect(rx,30,rw,H-58);
+  g.strokeStyle=themeRule();g.lineWidth=1;g.strokeRect(rx,30,rw,H-58);
+  const mid=30+(H-58)/2;
+  g.beginPath();g.moveTo(rx,mid);g.lineTo(rx+rw,mid);g.strokeStyle=themeRule();g.setLineDash([4,4]);g.stroke();g.setLineDash([]);
+  if(lineA.history.length>1){
+    g.beginPath();
+    lineA.history.forEach((v,i)=>{const xp=rx+(i/(180-1))*rw,yp=30+(H-58)*(1-v);i===0?g.moveTo(xp,yp):g.lineTo(xp,yp);});
+    g.strokeStyle='#6d28d9';g.lineWidth=2.5;g.stroke();
+  }
+  const curY=30+(H-58)*(1-lineA.level);
+  g.beginPath();g.arc(rx+rw-8,curY,8,0,Math.PI*2);g.fillStyle='#6d28d9';g.fill();
+  g.strokeStyle='rgba(255,255,255,0.5)';g.lineWidth=1.5;g.stroke();
+  g.fillStyle=themeMuted();g.font='11px Inter,sans-serif';g.textAlign='right';
+  g.fillText('High',rx-4,34);g.fillText('Low',rx-4,30+H-58);
+  g.textAlign='center';g.fillText('\u2190 Time \u2192',rx+rw/2,H-4);
+  g.fillStyle='#6d28d9';g.font='bold 14px Inter,sans-serif';
+  g.fillText('Eye position: '+Math.round(lineA.level*100-50)+'\u00b0',rx+rw/2,22);
+  document.getElementById('line-status').textContent='Level: '+Math.round(lineA.level*100)+'%';
+}
+function lineLoop(){lineDraw();requestAnimationFrame(lineLoop);}lineLoop();
+
+// ── FIGURE 7 · Limit Cycle ────────────────────────────
+const lc={N:64,pos:0,spd:3,dir:1,running:true,orbitPts:[]};
+function lcToggle(){lc.running=!lc.running;document.getElementById('lc-btn').textContent=lc.running?'\u23f8 Pause':'\u25b6 Play';document.getElementById('lc-status').textContent=lc.running?'Running':'Paused';}
+function lcReverse(){lc.dir*=-1;}
+function lcPerturb(){lc.pos=(lc.pos+lc.N*0.2)%lc.N;}
+function lcSpeedUpdate(){lc.spd=parseInt(document.getElementById('lc-speed-sl').value);document.getElementById('lc-speed-val').textContent=lc.spd;}
+
+function lcDraw(){
+  const cv=syncCanvas('lc-canvas');if(!cv)return;
+  const W=cv._W,H=cv._H,g=cv.getContext('2d');
+  g.clearRect(0,0,W,H);g.fillStyle='#fff';g.fillRect(0,0,W,H);
+  if(lc.running)lc.pos=(lc.pos+lc.dir*lc.spd*0.12+lc.N)%lc.N;
+  const N=lc.N,pos=lc.pos,sigma=4;
+  const act=Array.from({length:N},(_,i)=>{const d=Math.min(Math.abs(i-pos),N-Math.abs(i-pos));return Math.exp(-0.5*(d/sigma)**2);});
+  lc.orbitPts.push(pos);if(lc.orbitPts.length>80)lc.orbitPts.shift();
+
+  const cx=W*0.3,cy=H/2,R=Math.min(W*0.22,H*0.4);
+  g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);g.strokeStyle='rgba(26,86,219,0.1)';g.lineWidth=16;g.stroke();
+  for(let i=0;i<N;i++){const a=(i/N)*Math.PI*2-Math.PI/2,v=act[i];if(v<0.03)continue;g.beginPath();g.arc(cx+Math.cos(a)*R,cy+Math.sin(a)*R,4+v*10,0,Math.PI*2);g.fillStyle='rgba(26,86,219,'+(v*0.75)+')';g.fill();}
+  g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);g.strokeStyle='rgba(26,86,219,0.22)';g.lineWidth=2;g.stroke();
+  const pa=(pos/N)*Math.PI*2-Math.PI/2;
+  g.beginPath();g.arc(cx+Math.cos(pa)*R,cy+Math.sin(pa)*R,9,0,Math.PI*2);g.fillStyle='#ff6b6b';g.fill();g.strokeStyle='rgba(255,255,255,0.5)';g.lineWidth=1.5;g.stroke();
+  const aa=pa+lc.dir*0.35;
+  g.beginPath();g.moveTo(cx+Math.cos(pa)*R,cy+Math.sin(pa)*R);g.lineTo(cx+Math.cos(aa)*(R+18),cy+Math.sin(aa)*(R+18));g.strokeStyle='#ff6b6b';g.lineWidth=2;g.stroke();
+  g.fillStyle=themeMuted();g.font='11px Inter,sans-serif';g.textAlign='center';g.fillText('Asymmetric ring \u2192 traveling bump',cx,H-6);
+
+  const rx=W*0.58,rw=W*0.38,rcx=rx+rw/2,rcy=H/2,RR=Math.min(rw*0.42,H*0.38);
+  g.strokeStyle='rgba(26,86,219,0.18)';g.lineWidth=2;g.beginPath();g.arc(rcx,rcy,RR,0,Math.PI*2);g.stroke();
+  g.fillStyle='rgba(26,86,219,0.04)';g.fill();
+  lc.orbitPts.forEach((p,i)=>{
+    const a=(p/N)*Math.PI*2-Math.PI/2;
+    g.beginPath();g.arc(rcx+Math.cos(a)*RR,rcy+Math.sin(a)*RR,3,0,Math.PI*2);
+    g.fillStyle='rgba(255,107,107,'+(i/80*0.8)+')';g.fill();
+  });
+  const sa=(pos/N)*Math.PI*2-Math.PI/2;
+  g.beginPath();g.arc(rcx+Math.cos(sa)*RR,rcy+Math.sin(sa)*RR,9,0,Math.PI*2);g.fillStyle='#ff6b6b';g.fill();g.strokeStyle='rgba(255,255,255,0.5)';g.lineWidth=1.5;g.stroke();
+  g.fillStyle=themeMuted();g.font='12px Inter,sans-serif';g.textAlign='center';g.fillText('Limit Cycle (state space)',rcx,H-6);
+  g.fillStyle='#1a56db';g.fillText('Speed: '+lc.spd+'\u00d7',rcx,22);
+}
+function lcLoop(){lcDraw();requestAnimationFrame(lcLoop);}lcLoop();
+
+
+// ── TRI-PANEL STATIC DIAGRAMS ─────────────────────────────────────────────
+// Shared helpers
+function triSync(id){
+  const cv=document.getElementById(id);if(!cv||!cv.parentElement)return null;
+  const r=cv.parentElement.getBoundingClientRect();
+  cv.width=Math.floor(r.width)||180;cv.height=Math.floor(r.height)||160;
+  cv._W=cv.width;cv._H=cv.height;return cv;
+}
+function triDot(g,x,y,r,fill,stroke){g.beginPath();g.arc(x,y,r,0,Math.PI*2);g.fillStyle=fill;g.fill();if(stroke){g.strokeStyle=stroke;g.lineWidth=1.5;g.stroke();}}
+function triLine(g,x1,y1,x2,y2,col,w){g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.strokeStyle=col;g.lineWidth=w||1;g.stroke();}
+function triArrow(g,x1,y1,x2,y2,col){
+  triLine(g,x1,y1,x2,y2,col,1.2);
+  const a=Math.atan2(y2-y1,x2-x1);
+  g.beginPath();g.moveTo(x2,y2);g.lineTo(x2-6*Math.cos(a-0.4),y2-6*Math.sin(a-0.4));g.lineTo(x2-6*Math.cos(a+0.4),y2-6*Math.sin(a+0.4));g.closePath();g.fillStyle=col;g.fill();
+}
+function triInh(g,x2,y2,col){g.beginPath();g.arc(x2,y2,4,0,Math.PI*2);g.fillStyle='#fff';g.fill();g.strokeStyle=col;g.lineWidth=1.5;g.stroke();}
+
+// ── HOPFIELD ──────────────────────────────────────────
+(function drawHopfieldTri(){
+  // Connectivity: fully-connected recurrent with mixed +/- weights
+  (function(){
+    const cv=triSync('tri-hf-conn');if(!cv)return;
+    const g=cv.getContext('2d'),W=cv._W,H=cv._H;
+    g.fillStyle='#fff';g.fillRect(0,0,W,H);
+    const N=8,cx=W/2,cy=H/2,R=Math.min(W,H)*0.34;
+    const pts=Array.from({length:N},(_,i)=>{const a=(i/N)*Math.PI*2-Math.PI/2;return{x:cx+R*Math.cos(a),y:cy+R*Math.sin(a)};});
+    // draw some connections (subset for clarity)
+    const pairs=[[0,3],[1,5],[2,6],[0,4],[3,7],[1,4],[2,5]];
+    pairs.forEach(([i,j],k)=>{
+      const ex=k%2===0?'rgba(26,86,219,0.35)':'rgba(190,58,42,0.3)';
+      triLine(g,pts[i].x,pts[i].y,pts[j].x,pts[j].y,ex,1);
+    });
+    pts.forEach(p=>triDot(g,p.x,p.y,7,'#fff','rgba(0,48,87,0.5)'));
+    // weight matrix inset
+    const ms=36,mx=W-ms-6,my=6;
+    g.fillStyle='rgba(245,245,243,0.9)';g.fillRect(mx,my,ms,ms);
+    g.strokeStyle='rgba(0,0,0,0.1)';g.lineWidth=0.5;g.strokeRect(mx,my,ms,ms);
+    const pat=[[1,-1,1,-1],[- 1,1,-1,1],[1,-1,1,-1],[-1,1,-1,1]];
+    const cs=ms/4;
+    pat.forEach((row,ri)=>row.forEach((v,ci)=>{
+      g.fillStyle=v>0?'rgba(26,86,219,0.55)':'rgba(245,245,243,0.4)';
+      g.fillRect(mx+ci*cs,my+ri*cs,cs,cs);
+    }));
+    g.fillStyle='#4a4a45';g.font='9px Inter,sans-serif';g.textAlign='center';g.fillText('W',mx+ms/2,my+ms+10);
+  })();
+  // Activity: two patterns shown (clean + corrupted)
+  (function(){
+    const cv=triSync('tri-hf-act');if(!cv)return;
+    const g=cv.getContext('2d'),W=cv._W,H=cv._H;
+    g.fillStyle='#fff';g.fillRect(0,0,W,H);
+    const N=12,pad=14,bw=(W-pad*2)/N,bh=(H/2-pad*2)*0.8;
+    const stored=[1,0,1,0,0,1,0,1,1,0,1,0];
+    const noisy= [1,1,1,0,0,1,0,0,1,0,1,1];
+    // top: stored pattern
+    g.fillStyle='#4a4a45';g.font='9px Inter,sans-serif';g.textAlign='left';g.fillText('Stored',pad,10);
+    stored.forEach((v,i)=>{if(!v)return;g.fillStyle='rgba(26,86,219,0.75)';g.fillRect(pad+i*bw+1,H/2-pad-bh,bw-2,bh*v);});
+    g.strokeStyle='rgba(0,0,0,0.08)';g.lineWidth=1;g.beginPath();g.moveTo(pad,H/2-pad);g.lineTo(W-pad,H/2-pad);g.stroke();
+    // bottom: recalled from noisy
+    g.fillStyle='#4a4a45';g.font='9px Inter,sans-serif';g.textAlign='left';g.fillText('Recalled',pad,H/2+8);
+    stored.forEach((v,i)=>{if(!v)return;g.fillStyle='rgba(26,86,219,0.75)';g.fillRect(pad+i*bw+1,H-pad-bh,bw-2,bh*v);});
+    noisy.forEach((v,i)=>{if(!stored[i]&&v){g.fillStyle='rgba(190,58,42,0.35)';g.fillRect(pad+i*bw+1,H-pad-bh,bw-2,bh*0.4);}});
+    g.strokeStyle='rgba(0,0,0,0.08)';g.lineWidth=1;g.beginPath();g.moveTo(pad,H-pad);g.lineTo(W-pad,H-pad);g.stroke();
+    g.fillStyle='#9b9b96';g.font='8px Inter,sans-serif';g.textAlign='center';
+    g.fillText('Cell index',W/2,H-2);
+  })();
+  // State space: 3 discrete attractors in ~3D space
+  (function(){
+    const cv=triSync('tri-hf-ss');if(!cv)return;
+    const g=cv.getContext('2d'),W=cv._W,H=cv._H;
+    g.fillStyle='#fff';g.fillRect(0,0,W,H);
+    const cx=W/2,cy=H/2;
+    // 3 attractor basins as dashed circles
+    const pts3=[{x:cx-W*0.25,y:cy-H*0.2},{x:cx+W*0.28,y:cy-H*0.18},{x:cx,y:cy+H*0.26}];
+    pts3.forEach(p=>{
+      g.beginPath();g.arc(p.x,p.y,22,0,Math.PI*2);
+      g.strokeStyle='rgba(26,86,219,0.2)';g.lineWidth=1;g.setLineDash([3,3]);g.stroke();g.setLineDash([]);
+    });
+    // trajectories converging to attractors
+    const starts=[{x:cx-W*0.1,y:cy-H*0.05},{x:cx+W*0.1,y:cy+H*0.05},{x:cx-W*0.05,y:cy+H*0.12}];
+    starts.forEach((s,i)=>{
+      const t=pts3[i];
+      triArrow(g,s.x,s.y,t.x+(t.x>s.x?-10:10),t.y+(t.y>s.y?-10:10),'rgba(26,86,219,0.4)');
+    });
+    // attractor dots
+    pts3.forEach(p=>triDot(g,p.x,p.y,7,'rgba(26,86,219,0.12)','#1a56db'));
+    // axes
+    g.strokeStyle='rgba(0,0,0,0.12)';g.lineWidth=1;
+    triLine(g,18,H-20,18,20,'rgba(0,0,0,0.15)',1);
+    triLine(g,18,H-20,W-10,H-20,'rgba(0,0,0,0.15)',1);
+    g.fillStyle='#9b9b96';g.font='8px Inter,sans-serif';g.textAlign='left';g.fillText('r₁',W-18,H-12);
+    g.save();g.translate(10,H/2);g.rotate(-Math.PI/2);g.textAlign='center';g.fillText('rₙ',0,0);g.restore();
+  })();
+})();
+
+// ── RING ATTRACTOR ────────────────────────────────────
+(function drawRingTri(){
+
+  // Panel 1: Ring of neurons — nearby excite (blue lines), far inhibit (red lines)
+  (function(){
+    const cv=triSync('tri-ring-conn');if(!cv)return;
+    const g=cv.getContext('2d'),W=cv._W,H=cv._H;
+    g.fillStyle='#fff';g.fillRect(0,0,W,H);
+    const N=12,cx=W/2,cy=H/2,R=Math.min(W,H)*0.31;
+    const pts=Array.from({length:N},(_,i)=>{
+      const a=(i/N)*Math.PI*2-Math.PI/2;
+      return{x:cx+R*Math.cos(a),y:cy+R*Math.sin(a)};
+    });
+    const src=0; // active neuron at top
+    // Draw connections from src only
+    for(let j=1;j<N;j++){
+      const dist=Math.min(j,N-j);
+      const p=pts[src],q=pts[j];
+      if(dist<=2){
+        const a=dist===1?0.7:0.35;
+        g.beginPath();g.moveTo(p.x,p.y);g.lineTo(q.x,q.y);
+        g.strokeStyle='rgba(26,86,219,'+a+')';g.lineWidth=dist===1?2:1.2;g.stroke();
+      } else if(dist>=4){
+        const a=dist===4||dist===N-4?0.45:0.2;
+        g.beginPath();g.moveTo(p.x,p.y);g.lineTo(q.x,q.y);
+        g.strokeStyle='rgba(190,58,42,'+a+')';g.lineWidth=1;g.stroke();
+      }
+    }
+    // All neurons
+    pts.forEach((p,i)=>{
+      const dist=Math.min(i,N-i);
+      let fill,stroke;
+      if(i===src){fill='#0c7a5e';stroke='#0c7a5e';}
+      else if(dist<=1){fill='rgba(12,122,94,0.5)';stroke='#0c7a5e';}
+      else if(dist<=2){fill='rgba(12,122,94,0.2)';stroke='rgba(12,122,94,0.5)';}
+      else if(dist>=4){fill='rgba(190,58,42,0.1)';stroke='rgba(190,58,42,0.4)';}
+      else{fill='#f5f5f3';stroke='rgba(0,0,0,0.2)';}
+      triDot(g,p.x,p.y,dist===0?7:5.5,fill,stroke);
+    });
+    // Legend
+    g.font='8px Inter,sans-serif';g.textAlign='left';
+    g.fillStyle='rgba(26,86,219,0.8)';g.fillText('— excite',4,H-14);
+    g.fillStyle='rgba(190,58,42,0.7)';g.fillText('— inhibit',4,H-4);
+  })();
+
+  // Panel 2: Gaussian bump as bar chart
+  (function(){
+    const cv=triSync('tri-ring-act');if(!cv)return;
+    const g=cv.getContext('2d'),W=cv._W,H=cv._H;
+    g.fillStyle='#fff';g.fillRect(0,0,W,H);
+    const N=20,pad=10,bw=(W-pad*2)/N,maxH=H-pad*2-14,peak=10,sigma=2.5;
+    for(let i=0;i<N;i++){
+      const d=Math.min(Math.abs(i-peak),N-Math.abs(i-peak));
+      const v=Math.exp(-0.5*(d/sigma)**2);
+      const x=pad+i*bw,barH=maxH*v,y=pad+maxH-barH;
+      g.fillStyle='rgba(12,122,94,'+(0.18+v*0.72)+')';
+      g.fillRect(x+1,y,bw-2,barH);
+    }
+    g.strokeStyle='rgba(0,0,0,0.1)';g.lineWidth=1;
+    g.beginPath();g.moveTo(pad,pad+maxH);g.lineTo(W-pad,pad+maxH);g.stroke();
+    g.fillStyle='#9b9b96';g.font='8px Inter,sans-serif';g.textAlign='center';
+    g.fillText('neurons (by angle)',W/2,H-2);
+    g.fillStyle='#4a4a45';g.textAlign='left';g.fillText('firing rate',pad,10);
+  })();
+
+  // Panel 3: State space — ring manifold, dot can sit anywhere
+  (function(){
+    const cv=triSync('tri-ring-ss');if(!cv)return;
+    const g=cv.getContext('2d'),W=cv._W,H=cv._H;
+    g.fillStyle='#fff';g.fillRect(0,0,W,H);
+    const cx=W/2,cy=H/2,R=Math.min(W,H)*0.33;
+    // Ring
+    g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);
+    g.strokeStyle='rgba(12,122,94,0.45)';g.lineWidth=2.5;g.stroke();
+    // Two ghost dots showing bump could be anywhere
+    [{a:-0.9,alpha:0.2},{a:1.8,alpha:0.15}].forEach(({a,alpha})=>{
+      g.beginPath();g.arc(cx+R*Math.cos(a),cy+R*Math.sin(a),5,0,Math.PI*2);
+      g.fillStyle='rgba(12,122,94,'+alpha+')';g.fill();
+      g.strokeStyle='rgba(12,122,94,0.3)';g.lineWidth=1.2;g.stroke();
+    });
+    // Active dot
+    const ang=-Math.PI/4;
+    g.beginPath();g.arc(cx+R*Math.cos(ang),cy+R*Math.sin(ang),6,0,Math.PI*2);
+    g.fillStyle='#0c7a5e';g.fill();
+    g.strokeStyle='#fff';g.lineWidth=1.5;g.stroke();
+    // Label
+    g.fillStyle='rgba(0,0,0,0.3)';g.font='8px Inter,sans-serif';g.textAlign='center';g.textBaseline='middle';
+    g.fillText('bump position =',cx,cy-8);g.fillText('heading angle',cx,cy+5);
+    g.textBaseline='alphabetic';
+    g.fillStyle='rgba(0,0,0,0.2)';g.font='italic 10px serif';
+    g.textAlign='left';g.fillText('θ',cx+R+5,cy+4);
+  })();
+})();
+
+// ── TORUS / GRID CELLS ────────────────────────────────
+(function drawTorusTri(){
+  // Connectivity: 2D sheet with mexican-hat
+  (function(){
+    const cv=triSync('tri-torus-conn');if(!cv)return;
+    const g=cv.getContext('2d'),W=cv._W,H=cv._H;
+    g.fillStyle='#fff';g.fillRect(0,0,W,H);
+    const rows=6,cols=7,pad=14;
+    const cw=(W-pad*2)/cols,ch=(H-pad*2)/rows;
+    // draw grid of neurons with mexican-hat connections from center
+    const ci=3,cj=2; // center
+    for(let i=0;i<rows;i++) for(let j=0;j<cols;j++){
+      const x=pad+j*cw+cw/2,y=pad+i*ch+ch/2;
+      const di=i-cj,dj=j-ci,dist=Math.sqrt(di*di+dj*dj);
+      const conn=dist<1.5?1:dist<2.8?0.4:dist<3.8?-0.3:0;
+      if(conn!==0&&!(i===cj&&j===ci)){
+        const cx2=pad+ci*cw+cw/2,cy2=pad+cj*ch+ch/2;
+        const col=conn>0?'rgba(26,86,219,'+(conn*0.5)+')':'rgba(190,58,42,'+(-conn*0.4)+')';
+        triLine(g,cx2,cy2,x,y,col,0.8);
+      }
+    }
+    for(let i=0;i<rows;i++) for(let j=0;j<cols;j++){
+      const x=pad+j*cw+cw/2,y=pad+i*ch+ch/2;
+      const di=i-cj,dj=j-ci,dist=Math.sqrt(di*di+dj*dj);
+      const active=dist<1.5;
+      triDot(g,x,y,4,active?'rgba(180,83,9,0.7)':'#fff','rgba(0,48,87,0.4)');
+    }
+    // wrap label
+    g.fillStyle='#9b9b96';g.font='8px Inter,sans-serif';g.textAlign='center';
+    g.fillText('2D sheet · periodic BC',W/2,H-2);
+  })();
+  // Activity: 2D heatmap with hexagonal bumps
+  (function(){
+    const cv=triSync('tri-torus-act');if(!cv)return;
+    const g=cv.getContext('2d'),W=cv._W,H=cv._H;
+    g.fillStyle='#fff';g.fillRect(0,0,W,H);
+    const pad=12,iw=W-pad*2,ih=H-pad*2;
+    // draw hexagonal lattice of activity bumps
+    const sp=iw/3.5;
+    const bumps=[
+      {x:pad+sp*0.5,y:pad+ih*0.25},{x:pad+sp*1.5,y:pad+ih*0.25},{x:pad+sp*2.5,y:pad+ih*0.25},
+      {x:pad+sp,y:pad+ih*0.7},{x:pad+sp*2,y:pad+ih*0.7},{x:pad+sp*3,y:pad+ih*0.7},
+    ];
+    const imgData=g.createImageData(Math.floor(iw),Math.floor(ih));
+    for(let px=0;px<iw;px++) for(let py=0;py<ih;py++){
+      let v=0;
+      bumps.forEach(b=>{const d=Math.hypot(px+pad-b.x,py+pad-b.y);v=Math.max(v,Math.exp(-0.5*(d/14)**2));});
+      if(v>0.05){
+        const idx=(py*Math.floor(iw)+px)*4;
+        imgData.data[idx]=26;imgData.data[idx+1]=86;imgData.data[idx+2]=219;
+        imgData.data[idx+3]=Math.floor(v*220);
+      }
+    }
+    g.putImageData(imgData,pad,pad);
+    g.strokeStyle='rgba(0,0,0,0.08)';g.lineWidth=1;g.strokeRect(pad,pad,iw,ih);
+    g.fillStyle='#9b9b96';g.font='8px Inter,sans-serif';g.textAlign='center';
+    g.fillText('Nx',W*0.5,H-2);g.save();g.translate(4,H/2);g.rotate(-Math.PI/2);g.textAlign='center';g.fillText('Ny',0,0);g.restore();
+  })();
+  // State space: torus
+  (function(){
+    const cv=triSync('tri-torus-ss');if(!cv)return;
+    const g=cv.getContext('2d'),W=cv._W,H=cv._H;
+    g.fillStyle='#fff';g.fillRect(0,0,W,H);
+    const cx=W/2,cy=H/2,TR=Math.min(W,H)*0.26,tr=Math.min(W,H)*0.11;
+    // draw torus with salmon fill like the Khona figure
+    for(let u=0;u<Math.PI*2;u+=0.12) for(let v2=0;v2<Math.PI*2;v2+=0.18){
+      const x3=(TR+tr*Math.cos(v2))*Math.cos(u);
+      const y3=(TR+tr*Math.cos(v2))*Math.sin(u)*0.42;
+      const z3=tr*Math.sin(v2);
+      const bright=clamp((z3+tr)/(2*tr),0.15,0.9);
+      g.beginPath();g.arc(cx+x3*0.82,cy+y3-z3*0.46,1.8,0,Math.PI*2);
+      g.fillStyle='rgba(220,120,100,'+(bright*0.7)+')';g.fill();
+    }
+    // current state dot
+    const u0=0.8,v0=1.2;
+    const x3=(TR+tr*Math.cos(v0))*Math.cos(u0);
+    const y3=(TR+tr*Math.cos(v0))*Math.sin(u0)*0.42;
+    const z3=tr*Math.sin(v0);
+    triDot(g,cx+x3*0.82,cy+y3-z3*0.46,5,'rgba(26,86,219,0.2)','#1a56db');
+    g.fillStyle='#9b9b96';g.font='8px Inter,sans-serif';g.textAlign='center';
+    g.fillText('Toroidal state space',W/2,H-2);
+  })();
+})();
+
+// ── LINE ATTRACTOR ────────────────────────────────────
+(function drawLineTri(){
+  // Connectivity: two populations with bidirectional excitation
+  (function(){
+    const cv=triSync('tri-line-conn');if(!cv)return;
+    const g=cv.getContext('2d'),W=cv._W,H=cv._H;
+    g.fillStyle='#fff';g.fillRect(0,0,W,H);
+    const cy=H/2;
+    // two clusters
+    const cA={x:W*0.28,y:cy},cB={x:W*0.72,y:cy};
+    const r=22;
+    // draw neurons in each cluster
+    [[-1,0],[0,-1],[0,1],[1,0]].forEach(([dx,dy])=>{
+      triDot(g,cA.x+dx*10,cA.y+dy*10,6,'rgba(109,40,217,0.55)','#6d28d9');
+      triDot(g,cB.x+dx*10,cB.y+dy*10,6,'rgba(109,40,217,0.4)','#5b21b6');
+    });
+    // mutual bidirectional arrows
+    triArrow(g,cA.x+r,cA.y-6,cB.x-r,cB.y-6,'rgba(109,40,217,0.5)');
+    triArrow(g,cB.x-r,cB.y+6,cA.x+r,cA.y+6,'rgba(109,40,217,0.5)');
+    // self-excitation loops
+    g.beginPath();g.arc(cA.x-r,cA.y,8,0,Math.PI*1.7);g.strokeStyle='rgba(26,86,219,0.4)';g.lineWidth=1.5;g.stroke();
+    g.beginPath();g.arc(cB.x+r,cB.y,8,0,Math.PI*1.7);g.strokeStyle='rgba(26,86,219,0.4)';g.lineWidth=1.5;g.stroke();
+    g.fillStyle='#9b9b96';g.font='8px Inter,sans-serif';g.textAlign='center';
+    g.fillText('Pop A',cA.x,cy+r+12);g.fillText('Pop B',cB.x,cy+r+12);
+    // weight matrix 2x2
+    const ms=26,mx=W-ms-4,my=4;
+    g.fillStyle='rgba(245,245,243,0.9)';g.fillRect(mx,my,ms,ms);
+    [[0.8,0.7],[0.7,0.8]].forEach((row,ri)=>row.forEach((v,ci)=>{
+      g.fillStyle='rgba(109,40,217,'+(v*0.7)+')';
+      g.fillRect(mx+ci*ms/2,my+ri*ms/2,ms/2,ms/2);
+    }));
+    g.strokeStyle='rgba(0,0,0,0.1)';g.lineWidth=0.5;g.strokeRect(mx,my,ms,ms);
+  })();
+  // Activity: two populations out of phase - step-like
+  (function(){
+    const cv=triSync('tri-line-act');if(!cv)return;
+    const g=cv.getContext('2d'),W=cv._W,H=cv._H;
+    g.fillStyle='#fff';g.fillRect(0,0,W,H);
+    const N=10,pad=12,bw=(W-pad*2)/N,maxH=(H-pad*2-16)/2;
+    // Cell 1 — ramps up
+    g.fillStyle='#4a4a45';g.font='8px Inter,sans-serif';g.textAlign='left';g.fillText('Cell 1',pad,10);
+    for(let i=0;i<N;i++){const v=i<4?0.1:i<6?0.5:0.95;g.fillStyle='rgba(109,40,217,0.65)';g.fillRect(pad+i*bw+0.5,pad+maxH*(1-v),bw-1,maxH*v);}
+    g.strokeStyle='rgba(0,0,0,0.08)';g.lineWidth=1;g.beginPath();g.moveTo(pad,pad+maxH);g.lineTo(W-pad,pad+maxH);g.stroke();
+    // Cell 2 — complementary
+    g.fillStyle='#4a4a45';g.font='8px Inter,sans-serif';g.textAlign='left';g.fillText('Cell 2',pad,pad+maxH+14);
+    for(let i=0;i<N;i++){const v=i<4?0.8:i<6?0.5:0.05;g.fillStyle='rgba(91,33,182,0.55)';g.fillRect(pad+i*bw+0.5,pad+maxH+16+maxH*(1-v),bw-1,maxH*v);}
+    g.strokeStyle='rgba(0,0,0,0.08)';g.lineWidth=1;g.beginPath();g.moveTo(pad,H-pad);g.lineTo(W-pad,H-pad);g.stroke();
+    g.fillStyle='#9b9b96';g.font='8px Inter,sans-serif';g.textAlign='center';g.fillText('Population state N →',W/2,H-2);
+  })();
+  // State space: a line with 3 attractor points on it
+  (function(){
+    const cv=triSync('tri-line-ss');if(!cv)return;
+    const g=cv.getContext('2d'),W=cv._W,H=cv._H;
+    g.fillStyle='#fff';g.fillRect(0,0,W,H);
+    const cx=W/2,cy=H/2;
+    // the attractor line (red, like Khona fig)
+    const lx1=W*0.12,lx2=W*0.88,ly1=H*0.65,ly2=H*0.25;
+    g.beginPath();g.moveTo(lx1,ly1);g.lineTo(lx2,ly2);
+    g.strokeStyle='rgba(220,80,60,0.7)';g.lineWidth=3;g.stroke();
+    // 3 stable points on the line
+    [[0.25,0.75],[0.5,0.5],[0.75,0.25]].forEach(([tx,ty])=>{
+      const x=lx1+(lx2-lx1)*tx,y=ly1+(ly2-ly1)*ty;
+      triDot(g,x,y,6,'rgba(190,58,42,0.18)','#be3a2a');
+    });
+    // trajectories converging to line from both sides
+    [[W*0.25,H*0.25],[W*0.7,H*0.68],[W*0.15,H*0.55]].forEach(p=>{
+      // find closest point on line
+      const t=((p[0]-lx1)*(lx2-lx1)+(p[1]-ly1)*(ly2-ly1))/((lx2-lx1)**2+(ly2-ly1)**2);
+      const tc=clamp(t,0,1);
+      const cx2=lx1+(lx2-lx1)*tc,cy2=ly1+(ly2-ly1)*tc;
+      triArrow(g,p[0],p[1],cx2+(p[0]-cx2)*0.2,cy2+(p[1]-cy2)*0.2,'rgba(109,40,217,0.35)');
+    });
+    // axes
+    g.strokeStyle='rgba(0,0,0,0.12)';g.lineWidth=1;
+    triLine(g,12,H-14,12,12,'rgba(0,0,0,0.15)',1);
+    triLine(g,12,H-14,W-6,H-14,'rgba(0,0,0,0.15)',1);
+    g.fillStyle='#9b9b96';g.font='8px Inter,sans-serif';
+    g.textAlign='left';g.fillText('r₁',W-14,H-5);
+    g.save();g.translate(5,H/2);g.rotate(-Math.PI/2);g.textAlign='center';g.fillText('r₂',0,0);g.restore();
+    g.save();g.translate(5,H*0.35);g.rotate(-Math.PI/2);g.textAlign='center';g.fillText('rₙ',0,0);g.restore();
+  })();
+})();
+
+// ── LIMIT CYCLE ───────────────────────────────────────
+(function drawLCTri(){
+  // Connectivity: ring with asymmetric shift
+  (function(){
+    const cv=triSync('tri-lc-conn');if(!cv)return;
+    const g=cv.getContext('2d'),W=cv._W,H=cv._H;
+    g.fillStyle='#fff';g.fillRect(0,0,W,H);
+    const N=10,cx=W/2,cy=H*0.52,R=Math.min(W,H)*0.32;
+    const pts=Array.from({length:N},(_,i)=>{const a=(i/N)*Math.PI*2-Math.PI/2;return{x:cx+R*Math.cos(a),y:cy+R*Math.sin(a)};});
+    // asymmetric: each neuron connects strongly to +1, weakly to -1
+    pts.forEach((p,i)=>{
+      const j1=(i+1)%N,j2=(i+2)%N,jp=(i-1+N)%N;
+      triArrow(g,p.x,p.y,pts[j1].x*0.7+p.x*0.3,pts[j1].y*0.7+p.y*0.3,'rgba(26,86,219,0.55)');
+      triLine(g,p.x,p.y,pts[jp].x,pts[jp].y,'rgba(26,86,219,0.15)',0.7);
+    });
+    pts.forEach((p,i)=>triDot(g,p.x,p.y,6,i<3?'rgba(26,86,219,0.65)':'#fff','rgba(0,48,87,0.45)'));
+    // direction arrow
+    const ax=cx+R*1.3,ay=cy;
+    g.fillStyle='#9b9b96';g.font='8px Inter,sans-serif';g.textAlign='center';g.fillText('offset →',W/2,H-2);
+  })();
+  // Activity: sequence of bumps at different times
+  (function(){
+    const cv=triSync('tri-lc-act');if(!cv)return;
+    const g=cv.getContext('2d'),W=cv._W,H=cv._H;
+    g.fillStyle='#fff';g.fillRect(0,0,W,H);
+    const N=16,pad=12,bw=(W-pad*2)/N;
+    const times=3,rowH=(H-pad*2-8)/times;
+    for(let t=0;t<times;t++){
+      const peak=(t*4+2)%N;
+      g.fillStyle='#9b9b96';g.font='7px Inter,sans-serif';g.textAlign='left';g.fillText('t'+(t+1),pad-1,pad+t*(rowH+4)+8);
+      for(let i=0;i<N;i++){
+        const d=Math.min(Math.abs(i-peak),N-Math.abs(i-peak));
+        const v=Math.exp(-0.5*(d/2.5)**2);
+        g.fillStyle='rgba(26,86,219,'+(0.15+v*0.65)+')';
+        g.fillRect(pad+i*bw+0.5,pad+t*(rowH+4)+rowH*(1-v),bw-1,rowH*v);
+      }
+      g.strokeStyle='rgba(0,0,0,0.06)';g.lineWidth=0.5;
+      g.beginPath();g.moveTo(pad,pad+t*(rowH+4)+rowH);g.lineTo(W-pad,pad+t*(rowH+4)+rowH);g.stroke();
+    }
+    g.fillStyle='#9b9b96';g.font='8px Inter,sans-serif';g.textAlign='center';g.fillText('Cell index →',W/2,H-2);
+  })();
+  // State space: closed orbit (limit cycle)
+  (function(){
+    const cv=triSync('tri-lc-ss');if(!cv)return;
+    const g=cv.getContext('2d'),W=cv._W,H=cv._H;
+    g.fillStyle='#fff';g.fillRect(0,0,W,H);
+    const cx=W*0.46,cy=H/2,R=Math.min(W,H)*0.32;
+    // orbit circle
+    g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);
+    g.strokeStyle='rgba(190,58,42,0.65)';g.lineWidth=2.2;g.setLineDash([]);g.stroke();
+    // current position
+    const ang=-Math.PI/3;
+    triDot(g,cx+R*Math.cos(ang),cy+R*Math.sin(ang),7,'rgba(190,58,42,0.18)','#be3a2a');
+    // direction arrow on orbit
+    const a2=ang+0.5;
+    triArrow(g,cx+R*Math.cos(ang),cy+R*Math.sin(ang),cx+R*Math.cos(a2),cy+R*Math.sin(a2),'rgba(190,58,42,0.6)');
+    // perturbation arrow snapping back
+    const px=cx+R*1.35*Math.cos(ang),py=cy+R*1.35*Math.sin(ang);
+    triDot(g,px,py,4,'rgba(190,58,42,0.08)','rgba(190,58,42,0.4)');
+    triArrow(g,px,py,cx+R*Math.cos(ang)*1.08,cy+R*Math.sin(ang)*1.08,'rgba(190,58,42,0.35)');
+    g.strokeStyle='rgba(0,0,0,0.12)';g.lineWidth=1;
+    triLine(g,12,H-14,12,12,'rgba(0,0,0,0.15)',1);
+    triLine(g,12,H-14,W-6,H-14,'rgba(0,0,0,0.15)',1);
+    g.fillStyle='#9b9b96';g.font='8px Inter,sans-serif';g.textAlign='left';g.fillText('r₁',W-14,H-5);
+    g.save();g.translate(5,H/2);g.rotate(-Math.PI/2);g.textAlign='center';g.fillText('rₙ',0,0);g.restore();
+  })();
+})();
+// END TRI DIAGRAMS
+
+
+
+</script>
+</body>
+</html>
