@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Grow Neurons on a Dish</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Sans:wght@400;500;600&display=swap');
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f2ede4;--bg2:#e8e1d5;
+  --ink:#26201a;--ink2:#5a5040;--ink3:#9a8e7a;
+  --accent:#3a5070;--border:rgba(38,32,26,0.1);
+  --panel-h:148px;
+}
+body.dark{
+  --bg:#0c0e18;--bg2:#070910;
+  --ink:#c8d4f0;--ink2:#7888b0;--ink3:#3a4460;
+  --accent:#7eb8f7;--border:rgba(120,180,255,0.08);
+}
+html,body{width:100%;height:100%;background:var(--bg);font-family:'Instrument Sans',sans-serif;color:var(--ink);overflow:hidden;transition:background .5s,color .5s;-webkit-tap-highlight-color:transparent;touch-action:none}
+
+/* ── canvas fills everything above the panel ── */
+#canvas-wrap{
+  position:fixed;top:0;left:0;right:0;
+  bottom:calc(var(--panel-h) + env(safe-area-inset-bottom));
+  overflow:hidden;background:var(--bg);
+  cursor:none;
+  transition:background .5s;
+}
+canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block;touch-action:none}
+#c{pointer-events:auto}
+#paint{pointer-events:none}
+
+/* ── bottom panel ── */
+#panel{
+  position:fixed;bottom:0;left:0;right:0;
+  height:calc(var(--panel-h) + env(safe-area-inset-bottom));
+  background:var(--bg);
+  border-top:1px solid var(--border);
+  display:flex;flex-direction:column;
+  padding:12px 16px calc(14px + env(safe-area-inset-bottom));
+  gap:10px;
+  transition:background .5s,border-color .5s;
+  z-index:50;
+}
+
+/* title row */
+#title-row{
+  display:flex;align-items:baseline;justify-content:space-between;
+}
+#ttl{
+  font-family:'Bebas Neue',sans-serif;font-size:1.55rem;
+  letter-spacing:.06em;color:var(--ink);line-height:1;
+  transition:color .5s;
+}
+#ct{
+  font-size:10px;letter-spacing:.02em;color:var(--ink3);
+  transition:color .5s;
+}
+
+/* color swatches row */
+#swatch-row{
+  display:flex;align-items:center;gap:8px;
+}
+.dot{
+  width:20px;height:20px;border-radius:50%;cursor:pointer;
+  border:2.5px solid transparent;
+  transition:transform .15s,border-color .15s;
+  flex-shrink:0;touch-action:manipulation;
+}
+.dot:hover{transform:scale(1.25)}
+.dot.on{border-color:rgba(0,0,0,.32);transform:scale(1.15)}
+body.dark .dot.on{border-color:rgba(255,255,255,.4)}
+
+/* controls row */
+#ctrl-row{
+  display:flex;align-items:center;gap:8px;
+  flex:1;
+}
+.tb{
+  background:none;border:1px solid var(--border);border-radius:4px;
+  min-width:36px;height:34px;padding:0 8px;
+  font-size:13px;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;color:var(--ink2);flex-shrink:0;
+  touch-action:manipulation;cursor:pointer;
+}
+.tb:hover,.tb.on{color:var(--accent);border-color:var(--accent);background:rgba(128,128,128,.04)}
+#sz{
+  -webkit-appearance:none;flex:1;height:2px;border-radius:2px;
+  outline:none;background:var(--border);transition:background .5s;
+  cursor:pointer;min-width:40px;
+}
+#sz::-webkit-slider-thumb{
+  -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+  background:var(--accent);transition:background .5s;
+}
+.abtn{
+  flex:1;padding:7px 4px;background:none;
+  border:1px solid var(--border);border-radius:4px;
+  font-family:'Instrument Sans',sans-serif;font-size:11px;
+  letter-spacing:.02em;color:var(--ink2);
+  transition:all .15s;font-weight:500;
+  touch-action:manipulation;cursor:pointer;text-align:center;
+}
+.abtn:hover{color:var(--accent);border-color:var(--accent)}
+#themeBtn{padding:7px 10px;font-size:14px;letter-spacing:0;flex:0}
+#soundBtn{padding:7px 10px;font-size:14px;flex:0}
+#vol::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent)}
+
+/* ── intro overlay ── */
+#overlay{
+  position:fixed;inset:0;z-index:200;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:var(--bg);
+  transition:opacity .8s ease, visibility .8s ease;
+  padding:32px;
+  text-align:center;
+}
+#overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
+#overlay h2{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(2.2rem,8vw,3.8rem);
+  letter-spacing:.06em;color:var(--ink);
+  line-height:1;margin-bottom:16px;
+}
+#overlay p{
+  font-family:'Instrument Sans',sans-serif;
+  font-size:clamp(.85rem,2.5vw,1rem);
+  color:var(--ink2);line-height:1.7;
+  max-width:320px;margin-bottom:32px;
+}
+#overlay p strong{color:var(--ink);font-weight:600}
+.instructions{
+  display:flex;flex-direction:column;gap:8px;
+  margin-bottom:36px;max-width:280px;width:100%;
+}
+.inst-row{
+  display:flex;align-items:center;gap:12px;
+  font-family:'Instrument Sans',sans-serif;
+  font-size:.82rem;color:var(--ink2);
+  text-align:left;
+}
+.inst-icon{
+  width:28px;height:28px;border-radius:6px;
+  border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;flex-shrink:0;color:var(--ink);
+  background:var(--bg2);
+}
+#start-btn{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.1rem;letter-spacing:.12em;
+  color:var(--bg);background:var(--ink);
+  border:none;border-radius:6px;
+  padding:14px 40px;cursor:pointer;
+  transition:opacity .2s;
+}
+#start-btn:hover{opacity:.8}
+
+/* cursor — desktop only */
+#cur{position:fixed;pointer-events:none;z-index:9999;width:20px;height:20px;transform:translate(-50%,-50%);transition:width .1s,height .1s}
+#cur svg{width:100%;height:100%}
+#cur.draw{width:36px;height:36px}
+@media (pointer:coarse){
+  #cur{display:none}
+  .tb{min-width:42px;height:40px;font-size:16px}
+  .abtn{padding:9px 6px;font-size:12px}
+  .dot{width:24px;height:24px}
+  #sz::-webkit-slider-thumb{width:22px;height:22px}
+  #vol{width:60px}
+  #vol::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent)}
+  :root{--panel-h:160px}
+}
+
+/* desktop: wider layout override */
+@media (min-width:700px) and (pointer:fine){
+  :root{--panel-h:110px}
+  #panel{flex-direction:row;align-items:center;padding:0 24px;gap:20px}
+  #title-row{flex-direction:column;align-items:flex-start;gap:2px;min-width:140px}
+  #swatch-row{flex-shrink:0}
+  #ctrl-row{flex:1}
+  #ct{font-size:9px}
+}
+</style>
+</head>
+<body class="light">
+
+<div id="canvas-wrap">
+  <canvas id="paint"></canvas>
+  <canvas id="c"></canvas>
+</div>
+
+<div id="panel">
+  <div id="title-row">
+    <div id="ttl">Grow Neurons on a Dish</div>
+    <div id="ct"><span id="sn">0</span> neurons · <span id="sf">0</span> firing</div>
+  </div>
+
+  <div id="swatch-row">
+    <div id="dots"></div>
+  </div>
+
+  <div id="ctrl-row">
+    <input type="range" id="sz" min=".3" max="2.2" step=".05" value="1">
+    <button class="tb on" id="bG">⊕</button>
+    <button class="tb" id="bF">◎</button>
+    <button class="tb" id="bE">◌</button>
+    <button class="abtn" id="bC">↺</button>
+    <button class="abtn" id="bS">↓</button>
+    <button class="abtn" id="themeBtn">☀</button>
+    <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+      <button class="abtn" id="soundBtn" style="flex:0;padding:7px 9px">♪</button>
+      <input type="range" id="vol" min="0" max="1" step="0.05" value="0.35"
+        style="-webkit-appearance:none;width:52px;height:2px;border-radius:2px;outline:none;cursor:pointer;background:var(--border)"
+        title="volume">
+    </div>
+  </div>
+</div>
+
+<div id="overlay">
+  <h2>Grow Neurons<br>on a Dish</h2>
+  <p>A living petri dish. Plant neurons, watch them grow, and listen as they fire.</p>
+  <div class="instructions">
+    <div class="inst-row"><div class="inst-icon">⊕</div><span><strong>Tap</strong> inside the dish to plant a neuron</span></div>
+    <div class="inst-row"><div class="inst-icon">⟡</div><span><strong>Hold &amp; drag</strong> to seed a whole culture</span></div>
+    <div class="inst-row"><div class="inst-icon">◎</div><span><strong>Fire</strong> sends signals racing down axons</span></div>
+    <div class="inst-row"><div class="inst-icon">♪</div><span><strong>Sound on</strong> — neurons click when they fire</span></div>
+  </div>
+  <button id="start-btn">Tap anywhere to start</button>
+</div>
+
+<div id="cur">
+  <svg viewBox="0 0 24 24" fill="none" id="curSvg">
+    <circle cx="12" cy="12" r="9" stroke="rgba(50,70,150,0.5)" stroke-width="1.2"/>
+    <circle cx="12" cy="12" r="1.8" fill="rgba(50,70,150,0.8)"/>
+    <line x1="12" y1="2" x2="12" y2="6" stroke="rgba(50,70,150,0.35)" stroke-width="1"/>
+    <line x1="12" y1="18" x2="12" y2="22" stroke="rgba(50,70,150,0.35)" stroke-width="1"/>
+    <line x1="2" y1="12" x2="6" y2="12" stroke="rgba(50,70,150,0.35)" stroke-width="1"/>
+    <line x1="18" y1="12" x2="22" y2="12" stroke="rgba(50,70,150,0.35)" stroke-width="1"/>
+  </svg>
+</div>
+
+<script>
+'use strict';
+
+// ── Audio ──────────────────────────────────────────────────────────
+let audioCtx = null;
+let soundOn = true;
+let volume = 0.35;
+
+function getAudioCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// Neuron firing sound: a sharp electrical click, like real extracellular recordings.
+// Just white noise with an extremely fast exponential decay (~8ms).
+function playFireSound(h){
+  if(!soundOn) return;
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+    const sr = ctx.sampleRate;
+    // ~10ms of white noise, decaying instantly
+    const len = sr * 0.012;
+    const buf = ctx.createBuffer(1, len, sr);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * Math.exp(-i/(len*0.08));
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const gain = ctx.createGain();
+    gain.gain.value = volume;
+    src.connect(gain);
+    gain.connect(ctx.destination);
+    src.start(now);
+  } catch(e){}
+}
+
+// ── Theme & palette ───────────────────────────────────────────────
+let dark = false;
+const PAL = {
+  light:[{h:210,s:72,l:40},{h:268,s:60,l:43},{h:158,s:65,l:33},{h:28,s:80,l:38},{h:343,s:65,l:42}],
+  dark: [{h:210,s:88,l:70},{h:268,s:78,l:70},{h:162,s:82,l:63},{h:36,s:92,l:63},{h:340,s:82,l:68}]
+};
+function gpal(){ return dark ? PAL.dark : PAL.light; }
+function hsl(h,s,l,a=1){ return `hsla(${h},${s}%,${l}%,${a})`; }
+
+// ── Canvas ────────────────────────────────────────────────────────
+const wrap = document.getElementById('canvas-wrap');
+const pc = document.getElementById('paint'), lc = document.getElementById('c');
+const pp = pc.getContext('2d'), lp = lc.getContext('2d');
+let W, H, DX, DY, DR;
+
+function resize(){
+  const r = wrap.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2); // cap at 2x
+  W = r.width; H = r.height;
+  lc.width = pc.width = W * dpr;
+  lc.height = pc.height = H * dpr;
+  lc.style.width = pc.style.width = W + 'px';
+  lc.style.height = pc.style.height = H + 'px';
+  pp.setTransform(dpr, 0, 0, dpr, 0, 0);
+  lp.setTransform(dpr, 0, 0, dpr, 0, 0);
+  DR = Math.min(W, H) * 0.44;
+  DX = W/2; DY = H/2;
+  drawBg();
+  for(const n of neurons) if(n.painted) n._paint();
+}
+function inDish(x,y){ return Math.hypot(x-DX,y-DY) <= DR-2; }
+
+// ── Background & dish ─────────────────────────────────────────────
+function drawBg(){
+  pp.clearRect(0,0,W,H);
+  pp.fillStyle = dark?'#0c0e18':'#f2ede4';
+  pp.fillRect(0,0,W,H);
+
+  pp.save();
+  pp.shadowColor = dark?'rgba(0,0,0,.55)':'rgba(0,0,0,.15)';
+  pp.shadowBlur = 36; pp.shadowOffsetY = 6;
+  pp.beginPath(); pp.arc(DX,DY,DR,0,Math.PI*2);
+  pp.fillStyle = dark?'#07091a':'#fdfaf3'; pp.fill();
+  pp.restore();
+
+  const gf = pp.createRadialGradient(DX-DR*.25,DY-DR*.25,DR*.04,DX,DY,DR);
+  if(dark){ gf.addColorStop(0,'#0e1228'); gf.addColorStop(.6,'#090c1c'); gf.addColorStop(1,'#060814'); }
+  else { gf.addColorStop(0,'#fffef9'); gf.addColorStop(.55,'#faf6ec'); gf.addColorStop(1,'#f2ebda'); }
+  pp.beginPath(); pp.arc(DX,DY,DR,0,Math.PI*2);
+  pp.fillStyle=gf; pp.fill();
+
+  pp.save();
+  pp.font=`400 9px 'Instrument Sans',sans-serif`;
+  pp.fillStyle=dark?'rgba(100,140,220,.2)':'rgba(100,80,50,.18)';
+  pp.textAlign='center';
+  pp.fillText('NEURAL CULTURE · 37°C', DX, DY+DR-14);
+  pp.restore();
+}
+
+function drawDishFrame(ctx){
+  ctx.save();
+  ctx.beginPath(); ctx.arc(DX,DY,DR,0,Math.PI*2);
+  ctx.strokeStyle=dark?'rgba(100,140,220,.32)':'rgba(160,140,100,.42)';
+  ctx.lineWidth=2.5; ctx.stroke();
+
+  ctx.beginPath(); ctx.arc(DX,DY,DR-6,0,Math.PI*2);
+  ctx.strokeStyle=dark?'rgba(140,180,255,.06)':'rgba(255,255,255,.55)';
+  ctx.lineWidth=4; ctx.stroke();
+
+  ctx.beginPath(); ctx.arc(DX,DY,DR-2,Math.PI*1.1,Math.PI*1.55);
+  ctx.strokeStyle=dark?'rgba(180,210,255,.15)':'rgba(255,255,255,.6)';
+  ctx.lineWidth=5; ctx.lineCap='round'; ctx.stroke();
+  ctx.restore();
+}
+
+// ── Palette dots ──────────────────────────────────────────────────
+let ci = 0;
+const dotsEl = document.getElementById('dots');
+dotsEl.style.cssText = 'display:flex;gap:7px;align-items:center';
+function buildDots(){
+  dotsEl.innerHTML='';
+  gpal().forEach((p,i)=>{
+    const d=document.createElement('div');
+    d.className='dot'+(i===ci?' on':'');
+    d.style.background=hsl(p.h,p.s,p.l);
+    d.style.boxShadow=dark?`0 0 6px ${hsl(p.h,p.s,p.l,.6)}`:`0 1px 3px ${hsl(p.h,p.s,p.l,.35)}`;
+    d.addEventListener('click',()=>{ ci=i; document.querySelectorAll('.dot').forEach((e,j)=>e.classList.toggle('on',j===i)); });
+    dotsEl.appendChild(d);
+  });
+}
+function updateCursor(){
+  const c=dark?'rgba(120,200,255,':'rgba(48,68,148,';
+  document.getElementById('curSvg').innerHTML=`
+    <circle cx="12" cy="12" r="9" stroke="${c}0.5)" stroke-width="1.2"/>
+    <circle cx="12" cy="12" r="1.8" fill="${c}0.85)"/>
+    <line x1="12" y1="2" x2="12" y2="6" stroke="${c}0.35)" stroke-width="1"/>
+    <line x1="12" y1="18" x2="12" y2="22" stroke="${c}0.35)" stroke-width="1"/>
+    <line x1="2" y1="12" x2="6" y2="12" stroke="${c}0.35)" stroke-width="1"/>
+    <line x1="18" y1="12" x2="22" y2="12" stroke="${c}0.35)" stroke-width="1"/>`;
+}
+function switchTheme(){
+  dark=!dark;
+  document.body.className=dark?'dark':'light';
+  document.getElementById('themeBtn').textContent=dark?'☾':'☀';
+  updateCursor(); buildDots(); drawBg();
+  for(const n of neurons) if(n.painted) n._paint();
+}
+
+// ── State ─────────────────────────────────────────────────────────
+let neurons=[], signals=[], sparks=[], zaps=[];
+let mx=0, my=0, down=false, tool='grow', sc=1;
+let frame=0, lastPlant=0;
+const MAXN=280;
+
+// ── Zap (action potential lightning) ──────────────────────────────
+// When a neuron fires, jagged lightning bolts radiate outward from soma
+class Zap {
+  constructor(x, y, h, s, l, r){
+    this.x=x; this.y=y; this.h=h; this.s=s; this.l=l;
+    this.life=1; this.dead=false;
+    // Generate 4–7 lightning arms
+    const numArms = 4+Math.floor(Math.random()*4);
+    this.arms = [];
+    for(let i=0;i<numArms;i++){
+      const baseAngle = (i/numArms)*6.28 + (Math.random()-.5)*.8;
+      const len = r*2.2 + Math.random()*r*2.8;
+      // Each arm is a series of jagged segments
+      const segs = 3+Math.floor(Math.random()*3);
+      const pts = [{x,y}];
+      let cx=x, cy=y;
+      for(let j=0;j<segs;j++){
+        const frac=(j+1)/segs;
+        const jitter=(Math.random()-.5)*len*.4*(1-frac*.5);
+        const perpX = -Math.sin(baseAngle)*jitter;
+        const perpY = Math.cos(baseAngle)*jitter;
+        cx = x + Math.cos(baseAngle)*len*frac + perpX;
+        cy = y + Math.sin(baseAngle)*len*frac + perpY;
+        pts.push({x:cx,y:cy});
+      }
+      // Some arms fork at the end
+      const fork = Math.random()<.5;
+      this.arms.push({pts, fork, forkPts: fork ? (() => {
+        const tip = pts[pts.length-1], prev = pts[pts.length-2];
+        const dx=tip.x-prev.x, dy=tip.y-prev.y;
+        const fLen = Math.hypot(dx,dy)*.6;
+        const a1=baseAngle+.4, a2=baseAngle-.4;
+        return [
+          {x:tip.x+Math.cos(a1)*fLen, y:tip.y+Math.sin(a1)*fLen},
+          {x:tip.x+Math.cos(a2)*fLen, y:tip.y+Math.sin(a2)*fLen}
+        ];
+      })() : null});
+    }
+  }
+  update(){
+    this.life -= 0.09+Math.random()*.04;
+    if(this.life<=0) this.dead=true;
+  }
+  draw(ctx){
+    ctx.save(); clipDish(ctx);
+    const a = this.life;
+    // Outer glow pass (thicker, more transparent)
+    for(const arm of this.arms){
+      ctx.beginPath();
+      ctx.moveTo(arm.pts[0].x, arm.pts[0].y);
+      for(let i=1;i<arm.pts.length;i++) ctx.lineTo(arm.pts[i].x, arm.pts[i].y);
+      ctx.strokeStyle = hsl(this.h, this.s, dark?this.l+20:this.l+10, a*.22);
+      ctx.lineWidth = 3.5; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke();
+      if(arm.fork && arm.forkPts){
+        const tip=arm.pts[arm.pts.length-1];
+        for(const fp of arm.forkPts){
+          ctx.beginPath(); ctx.moveTo(tip.x,tip.y); ctx.lineTo(fp.x,fp.y);
+          ctx.strokeStyle=hsl(this.h,this.s,dark?this.l+20:this.l+10,a*.15);
+          ctx.lineWidth=2; ctx.stroke();
+        }
+      }
+    }
+    // Core bright pass
+    for(const arm of this.arms){
+      ctx.beginPath();
+      ctx.moveTo(arm.pts[0].x, arm.pts[0].y);
+      for(let i=1;i<arm.pts.length;i++) ctx.lineTo(arm.pts[i].x, arm.pts[i].y);
+      ctx.strokeStyle = hsl(this.h, Math.min(100,this.s+20), dark?this.l+30:this.l+15, a*.85);
+      ctx.lineWidth = 1.2; ctx.stroke();
+      if(arm.fork && arm.forkPts){
+        const tip=arm.pts[arm.pts.length-1];
+        for(const fp of arm.forkPts){
+          ctx.beginPath(); ctx.moveTo(tip.x,tip.y); ctx.lineTo(fp.x,fp.y);
+          ctx.strokeStyle=hsl(this.h,Math.min(100,this.s+20),dark?this.l+30:this.l+15,a*.6);
+          ctx.lineWidth=.7; ctx.stroke();
+        }
+      }
+    }
+    ctx.restore();
+  }
+}
+
+// ── drawSoma ──────────────────────────────────────────────────────
+function drawSoma(ctx, x, y, r, seed){
+  const pts=11;
+  ctx.beginPath();
+  for(let i=0;i<pts;i++){
+    const angle=(i/pts)*6.28;
+    const jitter=0.78+0.22*Math.sin(seed*7.3+i*2.1+Math.cos(seed*3.1+i));
+    const px=x+Math.cos(angle)*r*jitter;
+    const py=y+Math.sin(angle)*r*jitter;
+    i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+  }
+  ctx.closePath();
+}
+
+// ── Branch ────────────────────────────────────────────────────────
+class Branch {
+  constructor(ox,oy,p,s){
+    this.h=p.h;this.s=p.s;this.l=p.l;
+    const len=(38+Math.random()*62)*s;
+    const segs=Math.max(4,(len/7)|0);
+    this.pts=[];
+    let angle=Math.random()*6.28,x=ox,y=oy;
+    const wobb=.44+Math.random()*.32,step=len/segs;
+    for(let i=0;i<=segs;i++){
+      this.pts.push({x,y});
+      angle+=(Math.random()-.5)*wobb;
+      x+=Math.cos(angle)*step; y+=Math.sin(angle)*step;
+    }
+    this.w=.42+Math.random()*.6;
+    this.prog=0;this.spd=.004+Math.random()*.003;this.done=false;
+    this.sub=null;this.subSpawned=false;
+    this.subAt=.5+Math.random()*.32;
+    this._sub=(Math.random()<.38&&segs>4)?{p,s:s*.46}:null;
+  }
+  update(){
+    if(this.done)return;
+    this.prog=Math.min(1,this.prog+this.spd);
+    if(this._sub&&!this.subSpawned&&this.prog>=this.subAt){
+      this.subSpawned=true;
+      const tip=this.pts[Math.floor(this.prog*(this.pts.length-1))];
+      this.sub=new Branch(tip.x,tip.y,this._sub.p,this._sub.s);
+    }
+    if(this.prog>=1)this.done=true;
+    if(this.sub)this.sub.update();
+  }
+  _draw(ctx,alpha,prog){
+    const end=Math.floor(prog*(this.pts.length-1));
+    if(end<1)return;
+    ctx.beginPath();ctx.moveTo(this.pts[0].x,this.pts[0].y);
+    for(let i=1;i<=end;i++)ctx.lineTo(this.pts[i].x,this.pts[i].y);
+    ctx.strokeStyle=hsl(this.h,this.s,this.l,alpha);
+    ctx.lineWidth=this.w;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
+    if(prog>=1){
+      const tip=this.pts[end];
+      ctx.beginPath();ctx.arc(tip.x,tip.y,this.w+.4,0,6.28);
+      ctx.fillStyle=hsl(this.h,this.s,this.l,.6);ctx.fill();
+    }
+    if(this.sub)this.sub._draw(ctx,alpha*.65,this.sub.prog);
+  }
+  drawLive(ctx){this._draw(ctx,dark?.5:.58,this.prog);}
+  paint(ctx){this.prog=1;if(this.sub)this.sub.prog=1;this._draw(ctx,dark?.52:.62,1);}
+}
+
+// ── Clip ──────────────────────────────────────────────────────────
+function clipDish(ctx){
+  ctx.beginPath();ctx.arc(DX,DY,DR-2,0,Math.PI*2);ctx.clip();
+}
+
+// ── Neuron ────────────────────────────────────────────────────────
+class Neuron {
+  constructor(x,y,idx){
+    this.x=x;this.y=y;this.idx=idx;
+    const p=gpal()[idx];this.h=p.h;this.s=p.s;this.l=p.l;
+    this.r=5+Math.random()*3;this.alpha=0;
+    this.seed=Math.random()*100;
+    this.branches=[];
+    for(let i=0;i<3+Math.floor(Math.random()*4);i++)
+      this.branches.push(new Branch(x,y,p,sc));
+    this.fireT=400+Math.random()*300|0;
+    this.painted=false;this.done=false;this.age=0;
+  }
+  update(){
+    this.age++;
+    if(this.alpha<1)this.alpha=Math.min(1,this.alpha+.055);
+    let allDone=true;
+    for(const b of this.branches){b.update();if(!b.done)allDone=false;}
+    if(allDone&&!this.painted){this._paint();this.painted=true;this.done=true;}
+    if(--this.fireT<=0){this._fire();this.fireT=180+Math.random()*220|0;}
+  }
+  _drawSomaTo(ctx,h,s,l){
+    const sg=ctx.createRadialGradient(this.x-this.r*.3,this.y-this.r*.3,0,this.x,this.y,this.r*1.1);
+    sg.addColorStop(0,hsl(h,s,dark?l+22:l+18,.98));
+    sg.addColorStop(.6,hsl(h,s,dark?l+8:l+4,.95));
+    sg.addColorStop(1,hsl(h,s,dark?l-5:l-8,.9));
+    drawSoma(ctx,this.x,this.y,this.r,this.seed);ctx.fillStyle=sg;ctx.fill();
+    drawSoma(ctx,this.x,this.y,this.r,this.seed);
+    ctx.strokeStyle=hsl(h,s,dark?l-5:l-12,.7);ctx.lineWidth=.7;ctx.stroke();
+    const nx=this.x+this.r*.15,ny=this.y+this.r*.1,nr=this.r*.44;
+    const ng=ctx.createRadialGradient(nx-nr*.2,ny-nr*.2,0,nx,ny,nr);
+    ng.addColorStop(0,hsl(h,s-10,dark?l+28:l+12,.82));
+    ng.addColorStop(1,hsl(h,s-5,dark?l+8:l,.65));
+    drawSoma(ctx,nx,ny,nr,this.seed+50);ctx.fillStyle=ng;ctx.fill();
+    drawSoma(ctx,nx,ny,nr,this.seed+50);
+    ctx.strokeStyle=hsl(h,s,dark?l-8:l-15,.35);ctx.lineWidth=.5;ctx.stroke();
+  }
+  _paint(){
+    const tp=gpal()[this.idx],h=tp.h,s=tp.s,l=tp.l;
+    pp.save();pp.save();clipDish(pp);pp.globalAlpha=.9;
+    for(const b of this.branches){b.h=h;b.s=s;b.l=l;b.paint(pp);}
+    const g=pp.createRadialGradient(this.x,this.y,0,this.x,this.y,this.r*5.5);
+    g.addColorStop(0,hsl(h,s,l,dark?.52:.38));g.addColorStop(.5,hsl(h,s,l,.07));g.addColorStop(1,hsl(h,s,l,0));
+    pp.beginPath();pp.arc(this.x,this.y,this.r*5.5,0,6.28);pp.fillStyle=g;pp.fill();
+    this._drawSomaTo(pp,h,s,l);
+    pp.restore();pp.restore();
+    this.h=h;this.s=s;this.l=l;
+  }
+  _fire(){
+    for(const b of this.branches)
+      if(b.pts.length>3&&Math.random()<.5)
+        signals.push(new Signal(b.pts,this.h,this.s,this.l));
+    // Zap lightning from soma
+    zaps.push(new Zap(this.x,this.y,this.h,this.s,this.l,this.r));
+    // Sound
+    playFireSound(this.h);
+    updateStats();
+  }
+  drawLive(ctx){
+    ctx.save();ctx.save();clipDish(ctx);ctx.globalAlpha=this.alpha;
+    for(const b of this.branches)b.drawLive(ctx);
+    const g=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.r*5);
+    g.addColorStop(0,hsl(this.h,this.s,this.l,dark?.42:.28));g.addColorStop(1,hsl(this.h,this.s,this.l,0));
+    ctx.beginPath();ctx.arc(this.x,this.y,this.r*5,0,6.28);ctx.fillStyle=g;ctx.fill();
+    this._drawSomaTo(ctx,this.h,this.s,this.l);
+    ctx.restore();ctx.restore();
+  }
+}
+
+// ── Signal ────────────────────────────────────────────────────────
+class Signal {
+  constructor(pts,h,s,l){
+    this.pts=pts;this.h=h;this.s=s;this.l=l;
+    this.t=0;this.spd=.015+Math.random()*.01;this.dead=false;
+    // Store last N positions with timestamps for the AP waveform trail
+    this.history=[];  // [{x,y,t}]
+    this.cx=pts[0].x;this.cy=pts[0].y;
+  }
+  update(){
+    this.t+=this.spd;if(this.t>=1){this.dead=true;return;}
+    const fi=this.t*(this.pts.length-1),i=fi|0,f=fi-i;
+    const a=this.pts[i],b=this.pts[Math.min(i+1,this.pts.length-1)];
+    this.cx=a.x+(b.x-a.x)*f;this.cy=a.y+(b.y-a.y)*f;
+    this.history.push({x:this.cx,y:this.cy,t:this.t});
+    // Keep ~40 samples — enough for depolarisation + repolarisation + undershoot
+    if(this.history.length>40)this.history.shift();
+  }
+  draw(ctx){
+    const n=this.history.length;if(n<2)return;
+    ctx.save();ctx.save();clipDish(ctx);
+
+    // Draw the trail as a thick axon-aligned stroke whose width & colour
+    // follows the action potential voltage profile:
+    //   newest (front) = bright white-hot depolarisation peak
+    //   mid = colour of neuron (repolarisation)
+    //   tail = slightly blue-shifted, narrow (hyperpolarisation undershoot)
+    for(let i=1;i<n;i++){
+      const age=(n-i)/n;           // 0=newest, 1=oldest
+      const prev=this.history[i-1],curr=this.history[i];
+
+      // AP voltage shape: sharp peak at front, falls off, slight undershoot at tail
+      // Modelled with a simple asymmetric curve
+      const front=1-age;           // 1 at tip, 0 at tail
+      // Width: wide bright peak, narrows in repol, tiny in undershoot
+      const w = age<0.15
+        ? 5 + front*5              // depolarisation — thick & bright
+        : age<0.55
+          ? 3*(1-age*1.2)          // repolarisation — thinning
+          : 0.8;                   // undershoot tail — thin line
+
+      // Colour: peak = near-white; repol = neuron hue; undershoot = cooler/darker
+      let rh=this.h, rs=this.s, rl=this.l, ra;
+      if(age<0.12){
+        // Depolarisation: bleach toward white-yellow
+        rl = dark ? this.l+42 : this.l+28;
+        rs = this.s*0.4;
+        ra = (1-age*6)*( dark?.95:.85);
+      } else if(age<0.5){
+        // Repolarisation: back to neuron colour, fading
+        const frac=(age-0.12)/0.38;
+        rl = (dark?this.l+42:this.l+28)*(1-frac) + this.l*frac;
+        rs = this.s*0.4*(1-frac) + this.s*frac;
+        ra = (dark?.75:.6)*(1-frac*0.5);
+      } else {
+        // Hyperpolarisation undershoot: slightly cooler hue, dim
+        rh = this.h+20;
+        rl = this.l-8;
+        ra = (dark?.25:.18)*(1-(age-0.5)*2);
+      }
+      if(ra<=0||w<=0) continue;
+
+      ctx.beginPath();
+      ctx.moveTo(prev.x,prev.y);ctx.lineTo(curr.x,curr.y);
+      ctx.strokeStyle=hsl(rh,rs,rl,ra);
+      ctx.lineWidth=Math.max(0.3,w);
+      ctx.lineCap='round';ctx.stroke();
+    }
+
+    // Bright leading tip — the depolarisation wavefront
+    const tip=this.history[this.history.length-1];
+    const glow=ctx.createRadialGradient(tip.x,tip.y,0,tip.x,tip.y,14);
+    glow.addColorStop(0,hsl(this.h,this.s*0.3,dark?this.l+50:this.l+30,.9));
+    glow.addColorStop(0.3,hsl(this.h,this.s,dark?this.l+20:this.l+10,.5));
+    glow.addColorStop(1,hsl(this.h,this.s,this.l,0));
+    ctx.beginPath();ctx.arc(tip.x,tip.y,14,0,6.28);
+    ctx.fillStyle=glow;ctx.fill();
+
+    ctx.restore();ctx.restore();
+  }
+}
+
+class Spark {
+  constructor(x,y,h,s,l){
+    this.x=x;this.y=y;this.h=h;this.s=s;this.l=l;
+    const a=Math.random()*6.28,sp=.2+Math.random()*.9;
+    this.vx=Math.cos(a)*sp;this.vy=Math.sin(a)*sp;
+    this.life=1;this.dead=false;this.r=.35+Math.random()*.55;
+  }
+  update(){this.x+=this.vx;this.y+=this.vy;this.vx*=.9;this.vy*=.9;this.life-=.048+Math.random()*.018;if(this.life<=0)this.dead=true;}
+  draw(ctx){ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,6.28);ctx.fillStyle=hsl(this.h,this.s,this.l,this.life*(dark?.62:.48));ctx.fill();}
+}
+
+// ── Stats ─────────────────────────────────────────────────────────
+function updateStats(){
+  document.getElementById('sn').textContent=neurons.length;
+  document.getElementById('sf').textContent=signals.length;
+}
+
+// ── Plant / erase ─────────────────────────────────────────────────
+function cc(e){const r=wrap.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
+
+function plant(x,y){
+  if(!inDish(x,y)||neurons.length>=MAXN)return;
+  const jx=x+(Math.random()-.5)*16,jy=y+(Math.random()-.5)*16;
+  if(!inDish(jx,jy))return;
+  for(const n of neurons)if(Math.abs(n.x-jx)<9&&Math.abs(n.y-jy)<9)return;
+  neurons.push(new Neuron(jx,jy,Math.floor(Math.random()*gpal().length)));
+  updateStats();
+}
+
+function erase(x,y){
+  neurons=neurons.filter(n=>Math.hypot(n.x-x,n.y-y)>26);
+  drawBg();for(const n of neurons)if(n.painted)n._paint();
+  updateStats();
+}
+
+// ── Loop ──────────────────────────────────────────────────────────
+function loop(){
+  requestAnimationFrame(loop);frame++;
+  lp.clearRect(0,0,W,H);
+
+  if(down&&tool==='grow'&&frame-lastPlant>12){plant(mx,my);lastPlant=frame;}
+
+  for(const n of neurons){n.update();if(!n.done)n.drawLive(lp);}
+
+  // Zaps — drawn before signals so signals travel over them
+  for(let i=zaps.length-1;i>=0;i--){
+    const z=zaps[i];z.update();
+    if(z.dead){zaps.splice(i,1);continue;}
+    z.draw(lp);
+  }
+
+  lp.save();lp.lineJoin='round';lp.lineCap='round';
+  for(let i=signals.length-1;i>=0;i--){
+    const s=signals[i];s.update();
+    if(s.dead){signals.splice(i,1);continue;}
+    s.draw(lp);
+  }
+  lp.restore();
+
+  for(let i=sparks.length-1;i>=0;i--){
+    const s=sparks[i];s.update();
+    if(s.dead){sparks.splice(i,1);continue;}
+    s.draw(lp);
+  }
+
+  if(down&&tool==='grow'&&inDish(mx,my)){
+    const p=gpal()[Math.floor(Math.random()*gpal().length)];
+    const g=lp.createRadialGradient(mx,my,0,mx,my,28*sc);
+    g.addColorStop(0,hsl(p.h,p.s,p.l,dark?.09:.06));g.addColorStop(1,hsl(p.h,p.s,p.l,0));
+    lp.beginPath();lp.arc(mx,my,28*sc,0,6.28);lp.fillStyle=g;lp.fill();
+  }
+  if(tool==='erase'){
+    lp.beginPath();lp.arc(mx,my,24,0,6.28);
+    lp.strokeStyle=dark?'rgba(255,110,70,.15)':'rgba(180,50,20,.1)';
+    lp.lineWidth=1;lp.stroke();
+  }
+
+  drawDishFrame(lp);
+}
+
+// ── Intro overlay ─────────────────────────────────────────────────
+function dismissOverlay(){
+  document.getElementById('overlay').classList.add('hidden');
+  getAudioCtx(); // unlock audio
+}
+document.getElementById('start-btn').addEventListener('click', dismissOverlay);
+document.getElementById('overlay').addEventListener('click', dismissOverlay);
+
+// ── Init ──────────────────────────────────────────────────────────
+buildDots();updateCursor();
+resize();
+window.addEventListener('resize',resize);
+loop();
+
+// ── Input — mouse ─────────────────────────────────────────────────
+const curEl=document.getElementById('cur');
+document.addEventListener('mousemove',e=>{
+  curEl.style.left=e.clientX+'px';curEl.style.top=e.clientY+'px';
+  const{x,y}=cc(e);mx=x;my=y;
+  if(down&&tool==='erase')erase(x,y);
+});
+document.addEventListener('mousedown',e=>{
+  const r=wrap.getBoundingClientRect();
+  if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)return;
+  const{x,y}=cc(e);mx=x;my=y;down=true;curEl.classList.add('draw');
+  getAudioCtx(); // unlock audio on first interaction
+  if(tool==='fire'){
+    const near=neurons.filter(n=>Math.hypot(n.x-x,n.y-y)<120);
+    (near.length?near:neurons.filter(()=>Math.random()<.35)).forEach((n,i)=>setTimeout(()=>n._fire(),i*30));
+  }
+});
+document.addEventListener('mouseup',()=>{down=false;curEl.classList.remove('draw');});
+document.addEventListener('mouseleave',()=>{down=false;curEl.classList.remove('draw');});
+
+// ── Input — touch ─────────────────────────────────────────────────
+lc.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  getAudioCtx();
+  down=true;
+  const t=e.touches[0];const{x,y}=cc(t);mx=x;my=y;
+  if(tool==='fire'){
+    const near=neurons.filter(n=>Math.hypot(n.x-x,n.y-y)<120);
+    (near.length?near:neurons.filter(()=>Math.random()<.35)).forEach((n,i)=>setTimeout(()=>n._fire(),i*30));
+  }
+},{passive:false});
+lc.addEventListener('touchend',e=>{e.preventDefault();down=false;},{passive:false});
+lc.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  const t=e.touches[0];const{x,y}=cc(t);mx=x;my=y;
+  if(tool==='erase')erase(x,y);
+},{passive:false});
+
+// ── Toolbar ───────────────────────────────────────────────────────
+function setTool(t){
+  tool=t;
+  ['bG','bF','bE'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  const m={grow:'bG',fire:'bF',erase:'bE'};
+  if(m[t])document.getElementById(m[t]).classList.add('on');
+}
+document.getElementById('bG').addEventListener('click',()=>setTool('grow'));
+document.getElementById('bF').addEventListener('click',()=>setTool('fire'));
+document.getElementById('bE').addEventListener('click',()=>setTool('erase'));
+document.getElementById('bC').addEventListener('click',()=>{
+  neurons=[];signals=[];sparks=[];zaps=[];drawBg();updateStats();
+});
+document.getElementById('bS').addEventListener('click',()=>{
+  const t=document.createElement('canvas');t.width=W;t.height=H;
+  const tc=t.getContext('2d');tc.drawImage(pc,0,0);tc.drawImage(lc,0,0);
+  const a=document.createElement('a');a.download='neurons.png';a.href=t.toDataURL();a.click();
+});
+document.getElementById('sz').addEventListener('input',e=>sc=parseFloat(e.target.value));
+document.getElementById('themeBtn').addEventListener('click',switchTheme);
+document.getElementById('soundBtn').addEventListener('click',()=>{
+  soundOn=!soundOn;
+  document.getElementById('soundBtn').textContent=soundOn?'♪':'♩';
+  document.getElementById('soundBtn').style.opacity=soundOn?'1':'.4';
+  document.getElementById('vol').style.opacity=soundOn?'1':'.3';
+});
+document.getElementById('vol').addEventListener('input',e=>{
+  volume=parseFloat(e.target.value);
+  if(volume>0&&!soundOn){
+    soundOn=true;
+    document.getElementById('soundBtn').textContent='♪';
+    document.getElementById('soundBtn').style.opacity='1';
+    document.getElementById('vol').style.opacity='1';
+  }
+});
+
+// ── Ambient firing ────────────────────────────────────────────────
+setInterval(()=>{
+  if(neurons.length>2&&Math.random()<.5){
+    const n=neurons[(Math.random()*neurons.length)|0];n._fire();
+  }
+},2000);
+</script>
+</body>
+</html>
